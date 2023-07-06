@@ -33,7 +33,7 @@ pint.logging.setup(level=pint.logging.script_level)
 import pint
 
 from pylk import constants
-from pylk import pulsar
+from pylk.pulsar import Pulsar
 from pylk.plk import PlkWidget
 from pylk.opensomething import OpenSomethingWidget
 
@@ -197,15 +197,16 @@ class PylkWindow(QMainWindow):
         # Allow inline matplotlib figures
         self.kernel.shell.enable_matplotlib(gui='inline')
 
-        # Load the necessary packages in the embedded kernel
-        # TODO: show this line in a cell of it's own
-        cell = "import numpy as np, matplotlib.pyplot as plt, qtpulsar as qp"
-        self.kernel.shell.run_cell(cell, store_history=False)
-
         # Set the in-kernel matplotlib color scheme to black.
         self.setMplColorScheme('black')     # Outside as well (do we need this?)
         self.kernel.shell.run_cell(constants.matplotlib_rc_cell_black,
                 store_history=False)
+
+        # Load the necessary packages in the embedded kernel
+        # TODO: show this line in a cell of it's own
+        # TODO: does this execute if we set store_history=False?
+        cell = "import numpy as np, matplotlib.pyplot as plt, pint.pintk.pulsar as pulsar"
+        self.kernel.shell.run_cell(cell, store_history=True)
 
     def createJupyterWidget(self):
         """Create the Jupyter widget"""
@@ -452,9 +453,12 @@ class PylkWindow(QMainWindow):
 
         # Open a PINT pulsar here
 
-        self.psr = pulsar(parfilename, timfilename, ephem=None, fitter="WLSFitter")
+        self.psr = Pulsar(parfilename, timfilename, ephem=None, fitter="WLSFitter")
 
         # From pintk
+        # This is a way to set callbacks ('updates') from the main window
+        # I guess this is where we handle them
+
         #self.widgets["plk"].setPulsar(
         #    self.psr,
         #    updates=[self.widgets["par"].set_model, self.widgets["tim"].set_toas],
@@ -463,12 +467,14 @@ class PylkWindow(QMainWindow):
         #self.widgets["tim"].setPulsar(self.psr, updates=[self.widgets["plk"].update])
 
         # Update the plk widget
-        self.plkWidget.setPulsar(psr)
+        self.plkWidget.setPulsar(self.psr, updates=[])
 
         # Communicating with the kernel goes as follows
-        # self.kernel.shell.push({'foo': 43, 'print_process_id': print_process_id}, interactive=True)
+        # self.kernel.shell.push({'foo': 43, 'bar': 42}, interactive=True)
         # print("Embedded, we have:", self.kernel.shell.ns_table['user_local']['foo'])
 
+        # Set the pulsar also in the Jupyter Terminal
+        self.kernel.shell.push({'psr': self.psr}, interactive=True)
 
     def keyPressEvent(self, event, **kwargs):
         """Handle a key-press event

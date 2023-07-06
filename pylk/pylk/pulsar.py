@@ -1,12 +1,9 @@
-"""A wrapper around pulsar functions for pintkinter to use.
+"""A wrapper around pulsar functions for pintk to use.
 
 This object will be shared between widgets in the main frame
 and will contain the pre/post fit model, toas,
 pre/post fit residuals, and other useful information.
 self.selected_toas = selected toas, self.all_toas = all toas in tim file
-
-
-TODO: replace pre-fit / post-fit terminology, and move towards a state ladder
 """
 import copy
 
@@ -57,25 +54,6 @@ nofitboxpars = [
     "PLANET_SHAPIRO",
 ]
 
-# Some components by default don't have visible fitboxes
-#nofitboxcomponents = [
-#    "TroposphereDelay",
-#    "SolarWindDispersion",
-#    "DispersionDM",
-#    "DispersionDMX",
-#    "FD",
-#    "PLRedNoise",
-#    "ScaleToaError",
-#    "ErrorNoise",
-#    "AbsPhase",
-#]
-# Only a few timing model components will have a fitbox by default
-fitboxcomponents = [
-    "AstrometryEcliptic",
-    "AstrometryEquatorial",
-    "Spindown",
-    "PhaseJump",
-]
 
 class Pulsar:
     """Wrapper class for a pulsar.
@@ -189,10 +167,7 @@ class Pulsar:
 
     def _delete_TOAs(self, toa_table):
         del_inds = np.in1d(toa_table["index"], np.array(list(self.deleted)))
-        if del_inds.sum() < len(toa_table):
-            return toa_table[~del_inds]
-        else:
-            return None
+        return toa_table[~del_inds] if del_inds.sum() < len(toa_table) else None
 
     def delete_TOAs(self, indices, selected):
         # note: indices should be a list or an array
@@ -410,6 +385,7 @@ class Pulsar:
             )
             if self.fitted:
                 self.postfit_model.add_component(a)
+            log.info(f"New jump {retval} added for {selected.sum()} toas.")
             return retval
         # if gets here, has at least one jump param already
         # and iif it doesn't overlap or cancel, add the param
@@ -419,7 +395,8 @@ class Pulsar:
                 "There are no jumps (maskParameter objects) in PhaseJump. Please delete the PhaseJump object and try again. "
             )
             return None
-        # delete jump if perfectly overlaps any existing jump
+        # delete the jump ad flags if the selected TOAs exactly overlap;
+        # else just delete the jump flag from the selected TOAs
         for num in range(1, numjumps + 1):
             # create boolean array corresponding to TOAs to be jumped
             toas_jumped = [
@@ -435,11 +412,26 @@ class Pulsar:
                     self.postfit_model.delete_jump_and_flags(None, num)
                 log.info("removed param", f"JUMP{str(num)}")
                 return toas_jumped
+
+            # Has to be some overlap between jumps and selected TOAs
+            elif np.any(toas_jumped & selected):
+                # if not, then they don't exactly match, delete the common subset
+                jumped_selected = toas_jumped & selected
+                # Post fit model and prefit model share the same TOA table, so as long as we
+                # don't delete the jump altogether, modifying prefit model table flags is fine.
+                self.prefit_model.delete_not_all_jump_toas(
+                    self.all_toas.table["flags"][jumped_selected], num
+                )
+                log.info(
+                    f"Removed existing jump JUMP{str(num)} from {jumped_selected.astype(int).sum()} TOAs"
+                )
+                return list(jumped_selected)
         # if here, then doesn't match anything
         # add jump flags to selected TOAs at their perspective indices in the TOA tables
         retval = self.prefit_model.add_jump_and_flags(
             self.all_toas.table["flags"][selected]
         )
+        log.info(f"New jump {retval} added for {selected.sum()} toas.")
         if (
             self.fitted
             and self.prefit_model.components["PhaseJump"]
@@ -457,21 +449,11 @@ class Pulsar:
 
     def getDefaultFitter(self, downhill=False):
         if self.all_toas.wideband:
-            if downhill:
-                return "WidebandDownhillFitter"
-            else:
-                return "WidebandTOAFitter"
+            return "WidebandDownhillFitter" if downhill else "WidebandTOAFitter"
+        if self.prefit_model.has_correlated_errors:
+            return "DownhillGLSFitter" if downhill else "GLSFitter"
         else:
-            if self.prefit_model.has_correlated_errors:
-                if downhill:
-                    return "DownhillGLSFitter"
-                else:
-                    return "GLSFitter"
-            else:
-                if downhill:
-                    return "DownhillWLSFitter"
-                else:
-                    return "WLSFitter"
+            return "DownhillWLSFitter" if downhill else "WLSFitter"
 
     def print_chi2(self, selected):
         # Select all the TOAs if none are explicitly set
