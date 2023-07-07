@@ -641,9 +641,11 @@ class PlkXYChoiceWidget(QWidget):
         self.grid.addWidget(label, 0, 0, 1, labellength)
         label = QLabel(self)
         label.setText("X")
+        label.setAlignment(Qt.AlignBottom)
         self.grid.addWidget(label, 0, 0+labellength, 1, 1)
         label = QLabel(self)
         label.setText("Y")
+        label.setAlignment(Qt.AlignBottom)
         self.grid.addWidget(label, 0, 1+labellength, 1, 1)
 
         # Add all the xychoices
