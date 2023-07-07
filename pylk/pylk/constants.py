@@ -31,6 +31,9 @@ plk_figsize_inch = (5.0, 4.0)
 plk_figure_frame_lw = 2
 plk_figure_frame_mlw = 3
 
+mpl_console_style = 'dark_background'
+mpl_canvas_style = 'dark_background'
+
 # Do it like this: dict(list(r.items()) + list(s.items()))
 mpl_rcParams_white = dict({
     'lines.color': 'black',
@@ -49,6 +52,22 @@ mpl_rcParams_white = dict({
     'savefig.facecolor': 'white',
     'savefig.edgecolor': 'white'})
 mpl_rcParams_black = dict({
+    'lines.color': 'white',
+    'patch.edgecolor': 'yellow',
+    'text.color': 'white',
+    'axes.facecolor': 'black',
+    'axes.edgecolor': 'white',
+    'axes.labelcolor': 'white',
+    'axes.prop_cycle': mpl.cycler(color=['y', 'm', 'c', 'r', 'g', 'b', 'w']),
+    'xtick.color': 'white',
+    'ytick.color': 'white',
+    'grid.color': 'grey',
+    'grid.linestyle': 'dashed',
+    'figure.facecolor': 'black',
+    'figure.edgecolor': 'black',
+    'savefig.facecolor': 'black',
+    'savefig.edgecolor': 'black'})
+mpl_rcParams_black_old = dict({
     'lines.color': 'white',
     'patch.edgecolor': 'yellow',
     'text.color': 'white',

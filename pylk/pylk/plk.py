@@ -69,6 +69,8 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
+import matplotlib.pyplot as plt
+from cycler import cycler
 
 from astropy.time import Time
 import astropy.units as u
@@ -563,6 +565,7 @@ class PlkColorModeBoxes(QWidget):
             self.radiobuttons.append(radiobutton)
             
             if mode.mode_name == "default":
+                # default mode should be selected at start-up
                 radiobutton.setChecked(True)
 
             if mode.mode_name == "jump":
@@ -666,7 +669,7 @@ class PlkXYChoiceWidget(QWidget):
 
             radio = QRadioButton("")
             self.grid.addWidget(radio, 1+ii, 1+labellength, 1, 1)
-            if choice.lower() == 'pre-fit':
+            if choice.lower() == 'post-fit':
                 radio.setChecked(True)
                 self.ySelected = ii
             self.yButtonGroup.addButton(radio)
@@ -674,7 +677,7 @@ class PlkXYChoiceWidget(QWidget):
 
         self.setLayout(self.grid)
 
-    def setChoice(self, xid="mjd", yid="pre-fit"):
+    def setChoice(self, xid="mjd", yid="post-fit"):
         for ii, choice in enumerate(pulsar.plot_labels):
             if choice.lower() == xid:
                 self.xSelected = ii
@@ -908,9 +911,6 @@ class PlkWidget(QWidget):
         self.fitterWidget = PlkFitterSelect(parent=self)
         self.colorModeWidget = PlkColorModeBoxes(parent=self)
 
-        # We are creating the Figure here, so set the color scheme appropriately
-        self.setColorScheme(True)
-
         # Create the mpl Figure and FigCanvas objects. 
         # To start: 5x4 inches, 100 dots-per-inch
         # We also 'frame' the Canvas, just for looks
@@ -945,6 +945,9 @@ class PlkWidget(QWidget):
         self.plkAx2x = self.plkAxes.twinx()
         self.plkAx2y = self.plkAxes.twiny()
         self.plkAxes.set_zorder(0.1)
+        # We are creating the Figure here, so set the color scheme appropriately
+        self.setColorScheme(True)
+
 
         # Done creating the Figure. Restore color scheme to defaults
         self.setColorScheme(False)
@@ -994,7 +997,7 @@ class PlkWidget(QWidget):
 
         # Initialize the canvasbox inside the frame
         # Use a margin of 10 pixels to not overlap with the frame
-        self.canvasbox_inside.setContentsMargins(10,10,10,10)
+        self.canvasbox_inside.setContentsMargins(3,3,3,3)
         self.canvasbox_inside.addWidget(self.plkCanvas)
         self.plkCanvasFrame.setLayout(self.canvasbox_inside)
 
@@ -1083,26 +1086,73 @@ class PlkWidget(QWidget):
         color = self.palette().color(QtGui.QPalette.Window)
         r, g, b = color.red(), color.green(), color.blue()
         rgbcolor = (r/255.0, g/255.0, b/255.0)
+        #rgbcolor= (0., 0., 0.)
 
         if start:
             # Copy of 'white', because of bug in matplotlib that does not allow
             # deep copies of rcParams. Store values of matplotlib.rcParams
-            self.orig_rcParams = copy.deepcopy(constants.mpl_rcParams_white)
+            self.orig_rcParams = copy.deepcopy(constants.mpl_rcParams_black)
             for key, value in self.orig_rcParams.items():
                 self.orig_rcParams[key] = mpl.rcParams[key]
 
             rcP = copy.deepcopy(constants.mpl_rcParams_white)
-            rcP['axes.facecolor'] = rgbcolor
-            rcP['figure.facecolor'] = rgbcolor
-            rcP['figure.edgecolor'] = rgbcolor
-            rcP['savefig.facecolor'] = rgbcolor
-            rcP['savefig.edgecolor'] = rgbcolor
+            #rcP['axes.facecolor'] = rgbcolor
+            #rcP['figure.facecolor'] = rgbcolor
+            #rcP['figure.edgecolor'] = rgbcolor
+            #rcP['savefig.facecolor'] = rgbcolor
+            #rcP['savefig.edgecolor'] = rgbcolor
 
             for key, value in rcP.items():
                 mpl.rcParams[key] = value
         else:
             for key, value in constants.mpl_rcParams_black.items():
                 mpl.rcParams[key] = value
+
+    def setColorScheme_db(self, start=True):
+        """
+        Set the color scheme
+
+        :param start:   When true, save the original scheme, and set to white
+                        When False, restore the original scheme
+        """
+
+        # TODO: place this function somewhere else
+        def apply_style(fig, ax, style_name='dark_background'):
+            # Create a copy of the current rcParams so we don't modify the global version
+            rc = mpl.rcParams.copy()
+
+            # Update the copy with the style
+            rc.update(plt.style.library[style_name])
+
+            # Set figure properties
+            fig.set_facecolor(rc['figure.facecolor'])
+
+            # Set axes properties
+            ax.set_facecolor(rc['axes.facecolor'])
+            ax.grid(color=rc['grid.color'])
+            ax.spines['bottom'].set_color(rc['axes.edgecolor'])
+            ax.spines['top'].set_color(rc['axes.edgecolor']) 
+            ax.spines['right'].set_color(rc['axes.edgecolor'])
+            ax.spines['left'].set_color(rc['axes.edgecolor'])
+            ax.xaxis.label.set_color(rc['axes.labelcolor'])
+            ax.yaxis.label.set_color(rc['axes.labelcolor'])
+            ax.tick_params(axis='x', colors=rc['xtick.color'])
+            ax.tick_params(axis='y', colors=rc['ytick.color'])
+
+            # Change color cycle
+            ax.set_prop_cycle(rc['axes.prop_cycle'])
+
+            # We can iterate over all the lines and text in the Axes to set their color
+            for line in ax.lines:
+                line.set_color(rc['lines.color'])
+
+            for text in ax.texts:
+                text.set_color(rc['text.color'])
+
+        if start:
+            apply_style(self.plkFig, self.plkAxes, constants.mpl_canvas_style)
+        else:
+            apply_style(self.plkFig, self.plkAxes, constants.mpl_console_style)
 
     def update(self):
         if self.psr is not None:
@@ -1665,6 +1715,15 @@ class PlkWidget(QWidget):
             )
             return True
 
+    #WARNING  (pint.models.jump              ): The selected toa(s) overlap an existing jump.Remove all interfering jumps before attempting to jump these toas.
+    #Traceback (most recent call last):
+    #   File "/Users/vhaasteren/research/code/pylk/pylk/pylk/plk.py", line 1675, in updateJumped
+    #    log.error(
+    #  File "/opt/homebrew/Caskroom/miniforge/base/envs/pint/lib/python3.10/site-packages/loguru/_logger.py", line 1989, in error
+    #    __self._log("ERROR", None, False, __self._options, __message, args, kwargs)
+    #  File "/opt/homebrew/Caskroom/miniforge/base/envs/pint/lib/python3.10/site-packages/loguru/_logger.py", line 1954, in _log
+    #    log_record["message"] = message.format(*args, **kwargs)
+    #AttributeError: 'NoneType' object has no attribute 'format'
     def updateJumped(self, jump_name):
         """update self.jumped for the jump given"""
         # if removing a jump, add_jump returns a boolean array rather than a name
@@ -1799,7 +1858,9 @@ class PlkWidget(QWidget):
         """
         Call this function when the mouse is clicked and dragged (moved)
         """
+        # TODO: Right-click drag = select,  left-click drag = zoom
         log.debug(f"You clicked and dragged in mode '{self.plkToolbar.mode}'")
+        log.trace(f"Value of event '{self.pressEvent.key}' of {self.pressEvent}")
         # The following is for a selection if not in zoom mode
         if "zoom" not in self.plkToolbar.mode and event.inaxes == self.plkAxes:
             # Not in zoom mode: selecting TOAs
@@ -1931,6 +1992,7 @@ class PlkWidget(QWidget):
         print("-" * 40)
         print(self.psr.prefit_model.as_parfile())
 
+    # BUG: FIXME: if pressing J, we are gaining lots of colorModes
     def handleKeyJ(self, xpos=None, ypos=None, from_canvas=False):
         # jump the selected points, or unjump if already jumped
         jump_name = self.psr.add_jump(self.selected)

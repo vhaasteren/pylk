@@ -141,18 +141,20 @@ class PylkWindow(QMainWindow):
         self.aboutAction.setStatusTip('About Pylk')
         self.aboutAction.triggered.connect(self.onAbout)
 
-        # The status bar
-        self.theStatusBar = QStatusBar()
-        #self.statusBar()
-        self.setStatusBar(self.theStatusBar)
+        # I don't think we'll need the statusbar yet...
+        if False:
+            # The status bar
+            self.theStatusBar = QStatusBar()
+            #self.statusBar()
+            self.setStatusBar(self.theStatusBar)
 
-        # A label that shows what engine is being used (hardcoded: PINT)
-        self.engine_label = QLabel("PINT")
-        self.engine_label.setFrameStyle( QFrame.Sunken|QFrame.Panel)
-        self.engine_label.setLineWidth(4)
-        self.engine_label.setMidLineWidth(4)
-        self.engine_label.setStyleSheet("QLabel{color:black;background-color:red}")
-        self.theStatusBar.addPermanentWidget(self.engine_label)
+            # A label that shows what engine is being used (hardcoded: PINT)
+            self.engine_label = QLabel("PINT")
+            self.engine_label.setFrameStyle( QFrame.Sunken|QFrame.Panel)
+            self.engine_label.setLineWidth(4)
+            self.engine_label.setMidLineWidth(4)
+            self.engine_label.setStyleSheet("QLabel{color:black;background-color:red}")
+            self.theStatusBar.addPermanentWidget(self.engine_label)
 
         # On OSX, make sure the menu can be displayed (in the window itself)
         if sys.platform == 'darwin':
