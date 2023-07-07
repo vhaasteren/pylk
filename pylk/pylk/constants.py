@@ -20,8 +20,16 @@ PylkBanner = """
 
 """
 
-winsize_with_jupyter = (1350, 550)
-winsize_without_jupyter = (650, 550)
+#winsize_with_jupyter = (1350, 550)
+#winsize_without_jupyter = (650, 550)
+winsize_with_jupyter = (1400, 700)
+winsize_without_jupyter = (900, 700)
+#winsize_jupyter_console = (700, 500)
+
+plk_figure_dpi = 100
+plk_figsize_inch = (5.0, 4.0)
+plk_figure_frame_lw = 2
+plk_figure_frame_mlw = 3
 
 # Do it like this: dict(list(r.items()) + list(s.items()))
 mpl_rcParams_white = dict({

@@ -35,135 +35,6 @@ space           Print info about highlighted points (or all, if none are selecte
   q             Quit
   h             Print help
 
-
-
-
-Help from tempo2 plk:
-
-Fitting and Calculating Options
-===============================
-b          Bin TOAs within certain time bin
-c          Change fitting parameters
-d (or right mouse) delete point
-ctrl-d     delete highlighted points
-e          multiply all TOA errors by given amount
-F          run FITWAVES
-ctrl-f     remove FITWAVES curve from residuals
-i (or left mouse) identify point
-M          toggle removing mean from the residuals
-ctrl-n     Add white noise to site-arrival-times
-p          Change model parameter values
-ctrl-p     Toggle plotting versus pulse phase
-r          Reset (reload .par and .tim file)
-ctrl-r     Select regions in MJDs and write to file
-w          toggle fitting using weights
-x          redo fit using post-fit parameters
-+          add positive phase jump
--          add negative phase jump
-BACKSPACE  remove all phase jumps
-ctrl-=     add period to residuals above cursor
-/          re-read .par file
-
-Plot Selection
-==============
-D (or middle mouse) view profile
-s          start of zoom section
-f          finish of zoom section
-Ctrl-u     Overplot Shapiro delay
-u          unzoom
-v          view profiles for highlighted points
-V          define the user parameter
-Ctrl-v     for pre-fit plotting, decompose the timing model fits
-           (i.e. overplot the fitted curves - only for prefit plots
-ctrl-X     select x-axis specifically
-y          Rescale y-axis only
-Y          set y-scale exactly
-ctrl-Y     select y-axis specifically
-z          Zoom using mouse
-<          in zoom mode include previous observation
->          in zoom mode include next observation
-1          plot pre-fit  residuals vs date
-2          plot post-fit residuals vs date
-3          plot pre-fit  residuals vs orbital phase
-4          plot post-fit residuals vs orbital phase
-5          plot pre-fit  residuals serially
-6          plot post-fit residuals serially
-7          plot pre-fit  residuals vs day of year
-8          plot post-fit residuals vs day of year
-9          plot pre-fit  residuals vs frequency
-a          plot post-fit residuals vs frequency
-!          plot pre-fit  residuals vs TOA error
-@          plot post-fit residuals vs TOA error
-#          plot pre-fit  residuals vs user values
-$          plot post-fit residuals vs user values
-%          plot pre-fit  residuals vs year
-^          plot post-fit residuals vs year
-&          plot pre-fit residuals vs elevation
-*          plot post-fit residuals vs elevation
-(          plot pre-fit residuals vs rounded MJD
-)          plot post-fit residuals vs rounded MJD
-
-Options for selecting x and y axes individually
-Ctrl-X n   set x-axis
-Ctrl-Y n   set y-axis
-where n = 
-
-1         plot pre-fit residuals
-2         plot post-fit residuals
-3         plot centred MJD
-4         plot orbital phase
-5         plot TOA number
-6         plot day of year
-7         plot frequency
-8         plot TOA error
-9         plot user value
-0         plot year
--         plot elevation
-
-Display Options
-===============
-B          place periodic marks on the x-scale
-ctrl-c     Toggle between period epoch and centre for the reference epoch
-E          toggle plotting error bars
-g          change graphics device
-G          change gridding on graphics device
-ctrl-e     highlight points more than 3 sigma from the mean
-H          highlight points with specific flag using symbols
-ctrl-i     highlight points with specific flag using colours
-I          indicate individual observations
-j          draw line between points 
-J          toggle plotting points
-L          add label to plot
-ctrl-l     add line to plot
-ctrl-m     toggle menu bar
-N          highlight point with a given filename
-o          obtain/highlight all points currently in plot
-ctrl-T     set text size
-U          unhighlight selected points
-[          toggle plotting x-axis on log scale
-]          toggle plotting y-axis on log scale
-
-Output Options
-==============
-Ctrl-J     output listing of residuals in Jodrell format
-Ctrl-O     output listing of residuals in simple format
-l          list all data points in zoomed region
-m          measure distance between two points
-P          write new .par file
-Ctrl-w     over-write input .par file
-S          save a new .tim file
-Ctrl-S     overwrite input.tim file
-t          Toggle displaying statistics for zoomed region
-Ctrl-z     Listing of all highlighted points
-
-Various Options
-===============
-C          run unix command with filenames for highlighted observations
-h          this help file
-q          quit
-
-
-
 """
 
 import os, sys
@@ -173,6 +44,7 @@ import copy
 from PyQt5 import QtGui, QtCore
 
 from PyQt5.QtWidgets import (
+    QFrame,
     QCheckBox,
     QListWidget,
     QWidgetItem,
@@ -185,6 +57,7 @@ from PyQt5.QtWidgets import (
     QButtonGroup,
     QLabel,
     QRadioButton,
+    QComboBox,
 )
 
 # All the Qt keys we want to bind
@@ -193,6 +66,7 @@ from PyQt5.QtCore import Qt
 # Importing all the stuff for the matplotlib widget
 import matplotlib as mpl
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 
@@ -208,12 +82,6 @@ from pylk import constants
 import pint.logging
 from loguru import logger as log
 
-try:
-    from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
-except ImportError:
-    from matplotlib.backends.backend_tkagg import (
-        NavigationToolbar2TkAgg as NavigationToolbar2Tk,
-    )
 
 # Mapping from Matplotlib key strings to Qt key constants
 key_map = {
@@ -552,6 +420,181 @@ class PlkFitboxesWidget(QWidget):
                     self.boxChecked(parchanged, bool(w.widget().checkState()))
                     print("{0} set to {1}".format(parchanged, bool(w.widget().checkState())))
 
+class PlkRandomModelSelect(QFrame):
+    """
+    Allows one to select whether to fit with random models or not
+    """
+
+    def __init__(self, parent=None, **kwargs):
+        super().__init__(parent)
+        self.setStyleSheet(f'background-color: {background}; color: {foreground}')
+        self.boxChecked = None
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+        self.checkbox = None
+        self.modeLabel = None
+
+    def addRandomCheckbox(self, parent):
+        self.clear_layout()
+        self.checkbox = QCheckBox(
+            "Random Models",
+            self
+        )
+        self.checkbox.stateChanged.connect(self.changedRMCheckBox)
+        self.layout.addWidget(self.checkbox)
+
+        # You need to create a custom class or function for tooltip
+        # checkbox_ttp = CreateToolTip(checkbox, "Display random timing models consistent with selected TOAs.")
+
+        if "zoom" in parent.plkToolbar.mode:
+            self.modeLabel = QLabel("Mode: Zoom", self)
+        else:
+            self.modeLabel = QLabel("Mode: Select", self)
+        self.layout.addWidget(self.modeLabel)
+
+    def setCallbacks(self, boxChecked):
+        """
+        Set the callback functions
+        """
+        self.boxChecked = boxChecked
+
+    def clear_layout(self):
+        while self.layout.count():
+            child = self.layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
+    def changedRMCheckBox(self, state):
+        if state == Qt.Checked:
+            log.debug("Random Models turned on.")
+        else:
+            log.debug("Random Models turned off.")
+
+    def getRandomModel(self):
+        return self.checkbox.isChecked()
+
+    def changeMode(self, mode):
+        if "zoom" in mode:
+            self.modeLabel.setText("Mode: Zoom")
+        else:
+            self.modeLabel.setText("Mode: Select")
+
+
+class PlkLogLevelSelect(QWidget):
+    """
+    Allows one to select the log output level in the terminal
+    """
+
+    def __init__(self, parent=None, init_loglevel='INFO'):
+        super().__init__(parent)
+        self.layout = QVBoxLayout(self)
+        
+        self.logLabel = QLabel("Minimum Log Level: ", self)
+        self.layout.addWidget(self.logLabel)
+        
+        self.logLevelSelect = QComboBox(self)
+        self.logLevelSelect.addItems(["TRACE", "DEBUG", "INFO", "WARNING", "ERROR"])
+        try:
+            self.logLevelSelect.setCurrentIndex(self.logLevelSelect.findText(init_loglevel))
+        except ValueError:
+            self.logLevelSelect.setCurrentIndex(2)  # Warning is default
+        self.layout.addWidget(self.logLevelSelect)
+
+        self.logLevelSelect.currentIndexChanged.connect(self.changeLogLevel)
+
+    def changeLogLevel(self, index):
+        newLevel = self.logLevelSelect.itemText(index)  # get current value
+        log.remove()
+        log.add(
+            sys.stderr,
+            level=newLevel,
+            colorize=True,
+            format=pint.logging.format,
+            filter=pint.logging.LogFilter(),
+        )
+        log.info(f"Log level changed to {str(newLevel)}")
+
+class PlkFitterSelect(QWidget):
+    """
+    Allows one to select the fitter
+    """
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.layout = QVBoxLayout(self)
+
+        self.fitterLabel = QLabel("Fitter: ", self)
+        self.layout.addWidget(self.fitterLabel)
+
+        self.fitterSelect = QComboBox(self)
+        self.layout.addWidget(self.fitterSelect)
+        self.fitterSelect.addItems([])  # initially empty
+        self.fitterSelect.currentIndexChanged.connect(self.changeFitter)
+    
+    def updateFitterChoices(self, wideband):
+        self.fitterSelect.clear()
+        self.fitterSelect.addItems(wb_fitters if wideband else nb_fitters)
+
+    def changeFitter(self):
+        self.fitter = self.fitterSelect.currentText()
+        log.info(f"Selected {self.fitter}")
+
+
+class PlkColorModeBoxes(QWidget):
+    """
+    Allows one to select the color mode for the plot's TOAs.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.layout = QVBoxLayout(self)
+        self.group = QButtonGroup(self)
+        self.label = QLabel("Color Modes", self)
+        self.layout.addWidget(self.label)
+        self.radiobuttons = []
+        self.boxChecked = None
+
+    def addColorModeCheckbox(self, colorModes):
+        for mode in colorModes:
+            radiobutton = QRadioButton(mode.mode_name, self)
+            radiobutton.toggled.connect(lambda checked, m=mode: self.applyChanges(m) if checked else None)
+            self.group.addButton(radiobutton)
+            self.layout.addWidget(radiobutton)
+            self.radiobuttons.append(radiobutton)
+            
+            if mode.mode_name == "default":
+                radiobutton.setChecked(True)
+
+            if mode.mode_name == "jump":
+                if self.parent().psr.fitted:
+                    model = self.parent().psr.postfit_model
+                else:
+                    model = self.parent().psr.prefit_model
+                if "PhaseJump" not in model.components:
+                    radiobutton.setEnabled(False)
+
+    def setCallbacks(self, boxChecked):
+        """
+        Set the callback functions
+        """
+        self.boxChecked = boxChecked
+
+    def applyChanges(self, mode):
+        mode.displayInfo()
+        if self.boxChecked:
+            self.boxChecked(mode.mode_name)
+
+    def clear_grid(self):
+        for rb in self.radiobuttons:
+            self.layout.removeWidget(rb)
+            rb.setParent(None)
+        self.radiobuttons.clear()
+
+    def updateLayout(self):
+        self.clear_grid()
+        self.layout.addWidget(self.label)
+        for rb in self.radiobuttons:
+            self.layout.addWidget(rb)
 
 
 class PlkXYChoiceWidget(QWidget):
@@ -669,6 +712,34 @@ class PlkXYChoiceWidget(QWidget):
         if self.updatePlot is not None:
             self.updatePlot()
 
+class PlkToolbar(NavigationToolbar2QT):
+    """
+    A modification of the stock Matplotlib toolbar to perform the
+    necessary selections/un-selections on points
+    """
+
+    toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in ("Home", "Back", "Forward", "Pan", "Zoom", "Save")]
+
+    def __init__(self, *args, **kwargs):
+        super(PlkToolbar, self).__init__(*args, **kwargs)
+
+        self.setIconSize(QtCore.QSize(16, 16))
+        self.set_actions()
+
+    def set_actions(self):
+        for action in self.actions():
+            if action.text() == 'Home':
+                action.triggered.connect(self.updatePlot)
+        
+        self.homeCallback = None
+
+    def setHomeCallback(self, homeCallback):
+        self.homeCallback = homeCallback
+
+    def updatePlot(self):
+        if self.homeCallback:
+            self.homeCallback()
+
 class PlkActionsWidget(QWidget):
     """
     Shows action items like re-fit, write par, write tim, etc.
@@ -722,10 +793,10 @@ class PlkActionsWidget(QWidget):
         button.setToolTip('Reset everything to the beginning of the session.  Be Careful!')
         self.hbox.addWidget(button)
 
-        button = QPushButton('Save fig')
-        button.clicked.connect(self.saveFig)
-        button.setToolTip('Save the current figure to file')
-        self.hbox.addWidget(button)
+        #button = QPushButton('Save fig')
+        #button.clicked.connect(self.saveFig)
+        #button.setToolTip('Save the current figure to file')
+        #self.hbox.addWidget(button)
 
         self.hbox.addStretch(1)
 
@@ -804,6 +875,7 @@ class PlkWidget(QWidget):
         self.state_stack = []
         self.update_callbacks = None
 
+        self.rect = Rectangle((0, 0), 0, 0, fill=False)
         self.press = False
         self.move = False
 
@@ -818,31 +890,39 @@ class PlkWidget(QWidget):
 
 
     def initPlk(self):
-        self.setMinimumSize(*constants.winsize_without_jupyter)
+        # Minimum sizes give problems in general, so be careful
+        #self.setMinimumSize(*constants.winsize_without_jupyter)
 
         self.plkbox = QVBoxLayout()       # plkbox contains the whole PlkWidget
         self.xychoicebox = QHBoxLayout()  # xychoicebox contains the PlkXYChoiceWidget
+        self.actionsbox = QHBoxLayout()   # actionsbox contains the PlkActionsWidget, PlkLogLevelSelect, PlkFitterSelect
 
         self.fitboxesWidget = PlkFitboxesWidget(parent=self)    # Contains all the checkboxes
         self.xyChoiceWidget = PlkXYChoiceWidget(parent=self)
         self.actionsWidget = PlkActionsWidget(parent=self)
 
-        # TODO: implement these
-        #self.randomboxWidget = PlkRandomModelSelect(master=self)
-        #self.logLevelWidget = PlkLogLevelSelect(master=self)
-        #self.fitterWidget = PlkFitterSelect(master=self)
-        #self.colorModeWidget = PlkColorModeBoxes(master=self)
+        self.randomboxWidget = PlkRandomModelSelect(parent=self)
+        self.logLevelWidget = PlkLogLevelSelect(parent=self)
+        self.fitterWidget = PlkFitterSelect(parent=self)
+        self.colorModeWidget = PlkColorModeBoxes(parent=self)
 
         # We are creating the Figure here, so set the color scheme appropriately
         self.setColorScheme(True)
 
         # Create the mpl Figure and FigCanvas objects. 
-        # 5x4 inches, 100 dots-per-inch
-        # TODO: set these in constants.py
-        self.plkDpi = 100
-        self.plkFig = Figure((5.0, 4.0), dpi=self.plkDpi)
+        # To start: 5x4 inches, 100 dots-per-inch
+        # We also 'frame' the Canvas, just for looks
+        self.plkFig = Figure(constants.plk_figsize_inch,
+                             dpi=constants.plk_figure_dpi)
+        self.canvasbox = QVBoxLayout()
+        self.canvasbox_inside = QVBoxLayout()
+        self.plkCanvasFrame = QFrame(self)
+        self.plkCanvasFrame.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        self.plkCanvasFrame.setLineWidth(constants.plk_figure_frame_lw)
+        self.plkCanvasFrame.setMidLineWidth(constants.plk_figure_frame_mlw)
         self.plkCanvas = FigureCanvas(self.plkFig)
-        self.plkCanvas.setParent(self)
+        self.plkCanvas.setParent(self.plkCanvasFrame)
+        self.plkToolbar = PlkToolbar(self.plkCanvas, self)
         
         # Call-back functions for clicking and key-press.
         # This is a GUI-independent way of dealing with events. Matplotlib
@@ -854,9 +934,6 @@ class PlkWidget(QWidget):
         self.plkCanvas.mpl_connect("button_release_event", self.canvasReleaseEvent)
         self.plkCanvas.mpl_connect("motion_notify_event", self.canvasMotionEvent)
         self.plkCanvas.mpl_connect("key_press_event", self.canvasKeyEvent)
-
-        # This makes the "Home" button reset the plot just like the 'k' key
-        #self.plkToolbar.children["!button"].config(command=self.updatePlot)
 
         # Since we have only one plot, we could use add_axes 
         # instead of add_subplot, but then the subplot
@@ -881,9 +958,12 @@ class PlkWidget(QWidget):
         # At startup, all the widgets are visible
         self.xyChoiceVisible = True
         self.fitboxVisible = True
-        self.actionsVisible = False
-        #self.layoutMode = 1   # (0 = none, 1 = all, 2 = only fitboxes, 3 = fit & action)
-        self.layoutMode = 4    # (0 = none, 1 = all, 2 = only xy select, 3 = only fit, 4 = xy select & fit)
+        self.actionsVisible = True
+        self.layoutMode = 1    # (0 = none, 1 = all, 2 = only xy select, 3 = only fit, 4 = xy select & fit)
+
+        # This makes the "Home" button reset the plot just like the 'k' key
+        #self.plkToolbar.children["!button"].config(command=self.updatePlot)
+        self.plkToolbar.setHomeCallback(self.handleKeyK)
 
     def drawSomething(self):
         """
@@ -896,23 +976,43 @@ class PlkWidget(QWidget):
         self.plkAxes.set_xlabel('MJD')
         self.plkAxes.set_ylabel('Residual ($\mu$s)')
         self.plkFig.tight_layout()
-        #self.plkToolbar.push_current()
+        self.plkToolbar.push_current()
         self.plkCanvas.draw()
         self.setColorScheme(False)
 
     def initPlkLayout(self):
         """
-        Initialise the basic layout of this plk emulator emulator
+        Initialise the basic layout of pylk
+
+        The layout works with 'boxes', either horizontal or vertical.
+        The main box is 'plkbox' (QVBoxLayout)
         """
-        # Initialise the plk box
+        # Initialise the plk box (entire Plk Widget)
         self.plkbox.addWidget(self.fitboxesWidget)
 
+        # Initialize the canvasbox inside the frame
+        # Use a margin of 10 pixels to not overlap with the frame
+        self.canvasbox_inside.setContentsMargins(10,10,10,10)
+        self.canvasbox_inside.addWidget(self.plkCanvas)
+        self.plkCanvasFrame.setLayout(self.canvasbox_inside)
+
+        # Initialize the Figure/Canvas box
+        self.canvasbox.addWidget(self.plkToolbar)
+        self.canvasbox.addWidget(self.plkCanvasFrame)
+
         self.xychoicebox.addWidget(self.xyChoiceWidget)
-        self.xychoicebox.addWidget(self.plkCanvas)
+        self.xychoicebox.addLayout(self.canvasbox)
+        self.xychoicebox.addWidget(self.colorModeWidget)
+        #self.colorModeWidget.grid(row=2, column=0, columnspan=1, sticky="S")
 
         self.plkbox.addLayout(self.xychoicebox)
 
-        self.plkbox.addWidget(self.actionsWidget)
+        # Here: hbox with actionsWidget, fitterWidget, logLevelWidget
+        self.actionsbox.addWidget(self.actionsWidget)
+        self.actionsbox.addWidget(self.fitterWidget)
+        self.actionsbox.addWidget(self.logLevelWidget)
+        self.plkbox.addLayout(self.actionsbox)
+
         self.setLayout(self.plkbox)
 
     def initKeyHandlerDict(self):
@@ -965,7 +1065,10 @@ class PlkWidget(QWidget):
         """
         self.xyChoiceWidget.setVisible(self.xyChoiceVisible)
         self.fitboxesWidget.setVisible(self.fitboxVisible)
+        #self.actionsbox.setVisible(self.actionsVisible)
         self.actionsWidget.setVisible(self.actionsVisible)
+        self.fitterWidget.setVisible(self.actionsVisible)
+        self.logLevelWidget.setVisible(self.actionsVisible)
 
     def setColorScheme(self, start=True):
         """
@@ -1006,12 +1109,12 @@ class PlkWidget(QWidget):
             self.jumped = np.zeros(self.psr.all_toas.ntoas, dtype=bool)
             self.actionsWidget.setFitButtonText("Fit")
             self.fitboxesWidget.addFitCheckBoxes(self.psr.prefit_model)
-            #self.randomboxWidget.addRandomCheckbox(self)
-            #self.colorModeWidget.addColorModeCheckbox(self.color_modes)
-            #self.fitterWidget.updateFitterChoices(self.psr.all_toas.wideband)
+            self.randomboxWidget.addRandomCheckbox(self)
+            self.colorModeWidget.addColorModeCheckbox(self.color_modes)
+            self.fitterWidget.updateFitterChoices(self.psr.all_toas.wideband)
             self.xyChoiceWidget.setChoice()
             self.updatePlot(keepAxes=True)
-            #self.plkToolbar.update()
+            self.plkToolbar.update()
             # reset state stack
             self.state_stack = [self.base_state]
             self.current_state = State()
@@ -1034,25 +1137,30 @@ class PlkWidget(QWidget):
             self.state_stack.append(self.base_state)
 
         self.fitboxesWidget.setCallbacks(self.fitboxChecked)
-        #self.colorModeWidget.setCallbacks(self.updateGraphColors)
+        self.colorModeWidget.setCallbacks(self.updateGraphColors)
         self.xyChoiceWidget.setCallbacks(self.updatePlot)
         self.actionsWidget.setCallbacks(self.updatePlot,
             self.fit, self.reset, self.writePar, self.writeTim, self.revert
         )
 
+        # TODO: set the layout
         #self.fitboxesWidget.grid(row=0, column=0, columnspan=2, sticky="W")
-        #self.fitboxesWidget.addFitCheckBoxes(self.psr.prefit_model)
-        #self.randomboxWidget.addRandomCheckbox(self)
+        self.fitboxesWidget.addFitCheckBoxes(self.psr.prefit_model)
+        self.randomboxWidget.addRandomCheckbox(self)
         #self.colorModeWidget.grid(row=2, column=0, columnspan=1, sticky="S")
-        #self.colorModeWidget.addColorModeCheckbox(self.color_modes)
+        self.colorModeWidget.addColorModeCheckbox(self.color_modes)
         self.xyChoiceWidget.setChoice()
-        #self.fitterWidget.updateFitterChoices(self.psr.all_toas.wideband)
+        self.fitterWidget.updateFitterChoices(self.psr.all_toas.wideband)
+        index = self.fitterWidget.fitterSelect.findText(self.psr.fit_method)
+        if index != -1:  # -1 means the text was not found
+            self.fitterWidget.fitterSelect.setCurrentIndex(index)
+        # This is the TK way:
         #self.fitterWidget.fitterSelect.current(
         #    self.fitterWidget.fitterSelect["values"].index(self.psr.fit_method)
         #)
-        #self.fitterWidget.fitter = self.psr.fit_method
+        self.fitterWidget.fitter = self.psr.fit_method
         self.updatePlot(keepAxes=False)
-        #self.plkToolbar.update()
+        self.plkToolbar.update()
 
         # Draw the residuals
         self.xyChoiceWidget.updateChoice()
@@ -1100,7 +1208,6 @@ class PlkWidget(QWidget):
         """
         fit the selected points using the current pre-fit model
         """
-        raise NotIplementedError()
         if self.psr is not None:
             # check jumps wont cancel fit, if so, exit here
             if self.check_jump_invalid():
@@ -1112,13 +1219,13 @@ class PlkWidget(QWidget):
                 self.state_stack.append(copy.deepcopy(self.current_state))
             self.psr.fit_method = self.fitterWidget.fitter
             self.psr.fit(self.selected)
-            #if self.randomboxWidget.getRandomModel():
-            #    self.psr.random_models(self.selected)
+            if self.randomboxWidget.getRandomModel():
+                self.psr.random_models(self.selected)
             self.current_state.selected = copy.deepcopy(self.selected)
             self.actionsWidget.setFitButtonText("Re-fit")
             self.fitboxesWidget.addFitCheckBoxes(self.psr.prefit_model)
-            #self.randomboxWidget.addRandomCheckbox(self)
-            #self.colorModeWidget.addColorModeCheckbox(self.color_modes)
+            self.randomboxWidget.addRandomCheckbox(self)
+            self.colorModeWidget.addColorModeCheckbox(self.color_modes)
             xid, yid = self.xyChoiceWidget.plotIDs()
             self.xyChoiceWidget.setChoice(xid=xid, yid="post-fit")
             self.jumped = np.zeros(self.psr.all_toas.ntoas, dtype=bool)
@@ -1139,11 +1246,11 @@ class PlkWidget(QWidget):
         self.updateAllJumped()
         self.actionsWidget.setFitButtonText("Fit")
         self.fitboxesWidget.addFitCheckBoxes(self.base_state.psr.prefit_model)
-        #self.randomboxWidget.addRandomCheckbox(self)
-        #self.colorModeWidget.addColorModeCheckbox(self.color_modes)
+        self.randomboxWidget.addRandomCheckbox(self)
+        self.colorModeWidget.addColorModeCheckbox(self.color_modes)
         self.xyChoiceWidget.setChoice()
         self.updatePlot(keepAxes=False)
-        #self.plkToolbar.update()
+        self.plkToolbar.update()
         self.current_state = State()
         self.state_stack = [self.base_state]
         self.call_updates(psr_update=True)
@@ -1204,7 +1311,7 @@ class PlkWidget(QWidget):
             self.selected = self.psr.delete_TOAs(self.psr.deleted, self.selected)
             self.updateAllJumped()
             self.fitboxesWidget.addFitCheckBoxes(self.psr.prefit_model)
-            #self.randomboxWidget.addRandomCheckbox(self)
+            self.randomboxWidget.addRandomCheckbox(self)
             self.colorModeWidget.addColorModeCheckbox(self.color_modes)
             if len(self.state_stack) == 0:
                 self.state_stack.append(self.base_state)
@@ -1223,8 +1330,8 @@ class PlkWidget(QWidget):
 
         # These three calls are not in pintk
         self.setColorScheme(True)
-        self.plkAxes.clear()
-        self.plkAxes.grid(True)
+        #self.plkAxes.clear()
+        #self.plkAxes.grid(True)
 
         if self.psr is not None:
             # Get a mask for the plotting points
@@ -1274,6 +1381,7 @@ class PlkWidget(QWidget):
         if keepAxes:
             xmin, xmax = self.plkAxes.get_xlim()
             ymin, ymax = self.plkAxes.get_ylim()
+            log.debug(f"plotResiduals(True): ({xmin, xmax}), ({ymin, ymax})")
         else:
             xave = 0.5 * (np.max(self.xvals) + np.min(self.xvals))
             xmin = xave - 1.10 * (xave - np.min(self.xvals))
@@ -1289,6 +1397,7 @@ class PlkWidget(QWidget):
                 ymin = yave - 1.10 * (yave - np.min(self.yvals - self.yerrs))
                 ymax = yave + 1.10 * (np.max(self.yvals + self.yerrs) - yave)
             xmin, xmax = xmin.value, xmax.value
+            log.debug(f"plotResiduals(False): ({xmin, xmax}), ({ymin, ymax})")
 
         # determine if y-axis units need scaling and scale accordingly
         if "fit" in self.yid:
@@ -1315,8 +1424,9 @@ class PlkWidget(QWidget):
         self.plkAx2y.set_visible(False)
         self.plkAx2x.set_visible(False)
         # clears the views stack and puts the scaled view on top, fixes toolbar problems
-        # self.plkToolbar._views.clear()
-        #self.plkToolbar.push_current()
+        # It seems that _views is not exposed
+        #self.plkToolbar._views.clear()
+        self.plkToolbar.push_current()
 
         if self.xid in ["pre-fit", "post-fit"]:
             self.plkAxes.set_xlabel(plotlabels[self.xid][0])
@@ -1602,35 +1712,30 @@ class PlkWidget(QWidget):
             # Unlike in Tk, in PyQt we don't directly draw on the canvas
             # So, we need to create a rectangle artist using Matplotlib and add
             # it to the axes
-            self.rect = Rectangle((0, 0), 0, 0, fill=False)  # create an invisible rectangle
+            self.rect = Rectangle((0, 0), 0, 0, fill=False, edgecolor='gray')  # create an invisible rectangle
             self.plkAxes.add_patch(self.rect)  # add rectangle to the axes
 
     def canvasMotionEvent(self, event):
         """
         Call this function when mouse is moved in the figure/canvas
         """
+        log.trace(f"Canvas motion event triggered (coords = {event.xdata, event.ydata})")
         if event.inaxes == self.plkAxes and self.press:
             self.move = True
             # Draw bounding box
-            x0, x1 = self.pressEvent.x, event.x
-            y0, y1 = self.pressEvent.y, event.y
+            x0, x1 = self.pressEvent.xdata, event.xdata
+            y0, y1 = self.pressEvent.ydata, event.ydata
             self.rect.set_xy((min([x0, x1]), min([y0, y1])))  # set bottom left corner
             self.rect.set_width(abs(x1 - x0))  # set width
             self.rect.set_height(abs(y1 - y0))  # set height
             self.rect.set_visible(True)  # make rectangle visible
             self.plkCanvas.draw()        # Don't need to update the whole plot
 
-            #height = self.plkFig.bbox.height
-            #y0 = height - y0
-            #y1 = height - y1
-            #if hasattr(self, "brect"):
-            #    self.plkCanvas._tkcanvas.delete(self.brect)
-            #self.brect = self.plkCanvas._tkcanvas.create_rectangle(x0, y0, x1, y1)
-
     def canvasReleaseEvent(self, event):
         """
         Call this function when the figure/canvas is released
         """
+        log.debug(f"canvasReleaseEvent triggered (coords = {event.x, event.y})")
         self.rect.set_visible(False)  # hide the rectangle
         self.plkCanvas.draw()
 
@@ -1690,12 +1795,12 @@ class PlkWidget(QWidget):
 
     def clickAndDrag(self, event):
         """
-        Call this function when the mouse is clicked and dragged
+        Call this function when the mouse is clicked and dragged (moved)
         """
-        #log.debug(f"You clicked and dragged in mode '{self.plkToolbar.mode}'")
+        log.debug(f"You clicked and dragged in mode '{self.plkToolbar.mode}'")
         # The following is for a selection if not in zoom mode
-        #if "zoom" not in self.plkToolbar.mode and event.inaxes == self.plkAxes:
-        if event.inaxes == self.plkAxes:
+        if "zoom" not in self.plkToolbar.mode and event.inaxes == self.plkAxes:
+            # Not in zoom mode: selecting TOAs
             xmin, xmax = self.pressEvent.xdata, event.xdata
             ymin, ymax = self.pressEvent.ydata, event.ydata
             if xmin > xmax:
@@ -1708,12 +1813,14 @@ class PlkWidget(QWidget):
             self.updatePlot(keepAxes=True)
             #self.plkCanvas._tkcanvas.delete(self.brect)
             if any(self.selected):
+                log.debug(f"Updating plot with selected points: {np.sum(self.selected)}")
                 self.psr.selected_toas = self.psr.all_toas[self.selected]
                 self.psr.update_resids()
                 self.call_updates()
         else:
-            # This just removes the rectangle from the zoom click and drag
-            pass  # the rectangle is already removed in canvasReleaseEvent
+            # We need to NOT rescale the axes here. That is happening, even though
+            # we should be SELECTING TOAs
+            log.debug(f"In zoom mode/not in axes")
 
     def canvasKeyEvent(self, event):
         """
@@ -1959,8 +2066,8 @@ class PlkWidget(QWidget):
         ):
             self.psr.selected_toas = self.all_toas[self.selected]
         self.fitboxesWidget.addFitCheckBoxes(self.psr.prefit_model)
-        #self.randomboxWidget.addRandomCheckbox(self)
-        #self.colorModeWidget.addColorModeCheckbox(self.color_modes)
+        self.randomboxWidget.addRandomCheckbox(self)
+        self.colorModeWidget.addColorModeCheckbox(self.color_modes)
         self.updatePlot(keepAxes=True)
         self.call_updates()
 
@@ -1975,9 +2082,8 @@ class PlkWidget(QWidget):
 
     def handleKeyZ(self, xpos=None, ypos=None, from_canvas=False):
         """Zoom"""
-        #self.plkToolbar.zoom()
-        #self.randomboxWidget.changeMode(self.plkToolbar.mode)
-        pass
+        self.plkToolbar.zoom()
+        self.randomboxWidget.changeMode(self.plkToolbar.mode)
 
     def handleEscape(self, xpos=None, ypos=None, from_canvas=False):
         log.info("Exiting.")

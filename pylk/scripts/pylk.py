@@ -23,6 +23,7 @@ from PyQt5.QtWidgets import (
     QStatusBar,
     QFrame,
     QFileDialog,
+    QSplitter,
 )
 
 import pint.logging
@@ -105,6 +106,7 @@ class PylkWindow(QMainWindow):
         self.mainFrame = QWidget()
         self.setCentralWidget(self.mainFrame)
         self.hbox = QHBoxLayout()     # HBox contains all widgets
+        self.splitter = QSplitter(QtCore.Qt.Horizontal)
 
         # Menu item: open par/tim files
         self.openParTimAction = QAction('&Open par/tim', self)        
@@ -212,7 +214,9 @@ class PylkWindow(QMainWindow):
         """Create the Jupyter widget"""
 
         self.consoleWidget = RichJupyterWidget()
-        #self.consoleWidget.setMinimumSize(600, 550)
+
+        # Minimum size seems to give problems
+        #self.consoleWidget.setMinimumSize(*constants.winsize_jupyter_console)
 
         # Show the banner
         self.consoleWidget.banner = constants.PylkBanner
@@ -266,11 +270,12 @@ class PylkWindow(QMainWindow):
         """Initialise the Pylk layout"""
 
         # If other 'main' widgets exist, they can be added here
-        self.hbox.addWidget(self.openSomethingWidget)
-        self.hbox.addWidget(self.plkWidget)
+        self.splitter.addWidget(self.openSomethingWidget)
+        self.splitter.addWidget(self.plkWidget)
 
-        self.hbox.addStretch(1)
-        self.hbox.addWidget(self.consoleWidget)
+        #self.hbox.addStretch(1)
+        self.splitter.addWidget(self.consoleWidget)
+        self.hbox.addWidget(self.splitter)
         self.mainFrame.setLayout(self.hbox)
 
     def hideAllWidgets(self):
@@ -467,6 +472,8 @@ class PylkWindow(QMainWindow):
         #self.widgets["tim"].setPulsar(self.psr, updates=[self.widgets["plk"].update])
 
         # Update the plk widget
+        #self.plkWidget.setPulsar(self.psr, updates=[self.plkWidget.update])
+        # Calling 'update' here seems to delete our selections
         self.plkWidget.setPulsar(self.psr, updates=[])
 
         # Communicating with the kernel goes as follows
