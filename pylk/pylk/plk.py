@@ -77,7 +77,8 @@ import astropy.units as u
 import numpy as np
 
 import pint.pintk.pulsar as pulsar
-import pint.pintk.colormodes as cm
+from pylk import colormodes as cm
+#import pint.pintk.colormodes as cm
 #from pylk import pulsar   # Not used anymore
 from pylk import constants
 
@@ -422,6 +423,7 @@ class PlkFitboxesWidget(QWidget):
                     self.boxChecked(parchanged, bool(w.widget().checkState()))
                     print("{0} set to {1}".format(parchanged, bool(w.widget().checkState())))
 
+
 class PlkRandomModelSelect(QFrame):
     """
     Allows one to select whether to fit with random models or not
@@ -563,7 +565,7 @@ class PlkColorModeBoxes(QWidget):
             self.group.addButton(radiobutton)
             self.layout.addWidget(radiobutton)
             self.radiobuttons.append(radiobutton)
-            
+
             if mode.mode_name == "default":
                 # default mode should be selected at start-up
                 radiobutton.setChecked(True)
@@ -1102,7 +1104,8 @@ class PlkWidget(QWidget):
             #rcP['savefig.facecolor'] = rgbcolor
             #rcP['savefig.edgecolor'] = rgbcolor
 
-            for key, value in rcP.items():
+            #for key, value in rcP.items():
+            for key, value in constants.mpl_rcParams_black.items():
                 mpl.rcParams[key] = value
         else:
             for key, value in constants.mpl_rcParams_black.items():
@@ -1538,7 +1541,8 @@ class PlkWidget(QWidget):
                     mjd = m.conjunction(tt)
                     pb = m.pb()[0].to_value("day")
                     phs = (mjd - tt) / pb
-                    self.plkAxes.plot([phs, phs], [ymin, ymax], "k-")
+                    # TODO: Color
+                    self.plkAxes.plot([phs, phs], [ymin, ymax], "w-")
         else:
             self.plkAxes.set_ylabel(plotlabels[self.yid])
 
@@ -1565,8 +1569,9 @@ class PlkWidget(QWidget):
             sort_inds = np.argsort(f_toas_plot)
             f_toas_plot = f_toas_plot[sort_inds]
             for i in range(len(rs)):
+                # TODO: Color
                 self.plkAxes.plot(
-                    f_toas_plot, rs[i][sort_inds] * scale, "-k", alpha=0.3
+                    f_toas_plot, rs[i][sort_inds] * scale, "-w", alpha=0.3
                 )
 
     def determine_yaxis_units(self, miny, maxy):

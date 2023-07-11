@@ -10,15 +10,16 @@ import matplotlib as mpl
 PylkBanner = """
       +----------------------------------------------+
       |              PINT                            |
-      |              ====              ,~~~~.        |
-      |      Modern Pulsar Timing      i====i_       |
-      |                                |cccc|_)      |
-      |     Brought to you by the      |cccc|        |
-      |     NANOGrav collaboration     `-==-'        |
+      |              ====               ,~~~~.       |
+      |      Modern Pulsar Timing       i====i_      |
+      |                                 |cccc|_)     |
+      |     Brought to you by the       |cccc|       |
+      |     NANOGrav collaboration      `-==-'       |
       |                                              |
       +----------------------------------------------+
 
 """
+
 
 #winsize_with_jupyter = (1350, 550)
 #winsize_without_jupyter = (650, 550)
@@ -58,11 +59,14 @@ mpl_rcParams_black = dict({
     'axes.facecolor': 'black',
     'axes.edgecolor': 'white',
     'axes.labelcolor': 'white',
-    'axes.prop_cycle': mpl.cycler(color=['y', 'm', 'c', 'r', 'g', 'b', 'w']),
+    #'axes.prop_cycle': mpl.cycler(color=['y', 'm', 'c', 'r', 'g', 'b', 'w']),
+    'axes.prop_cycle': mpl.cycler(color=['#8dd3c7', '#feffb3', '#bfbbd9', '#fa8174', '#81b1d2', '#fdb462', '#b3de69', '#bc82bd', '#ccebc4', '#ffed6f']),
     'xtick.color': 'white',
     'ytick.color': 'white',
     'grid.color': 'grey',
     'grid.linestyle': 'dashed',
+    'grid.linewidth': '0.5',
+    'grid.alpha': '0.5',
     'figure.facecolor': 'black',
     'figure.edgecolor': 'black',
     'savefig.facecolor': 'black',
