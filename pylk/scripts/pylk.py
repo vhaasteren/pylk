@@ -600,6 +600,7 @@ def main():
     # Create the actual application
     qt_args = sys.argv[:1] + unparsed_args
     app = QApplication(qt_args)
+    app.setApplicationDisplayName("Pylk")
 
     # Create the window, and start the application
     pylkwin = PylkWindow(
