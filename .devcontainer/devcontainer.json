@@ -13,21 +13,12 @@
     "QT_X11_NO_MITSHM": "1"
   },
 
-   Put the project venv first on PATH (explicit, no ${PATH})
+  // Put the project venv first on PATH (explicit, no ${PATH})
   "remoteEnv": {
     "PATH": "/workspaces/pylk/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   },
 
-  "postCreateCommand": [
-    "python -m venv .venv",
-    ". .venv/bin/activate",
-    "pip install --upgrade pip",
-    // core deps + PINT; -e . for your package
-    "pip install --no-cache-dir qtpy astropy numpy scipy jplephem matplotlib uncertainties loguru pint-pulsar",
-    "pip install -e .",
-    // auto-activate venv for interactive shells
-    "echo 'source /workspaces/pylk/.venv/bin/activate' >> ~/.bashrc"
-  ].join(" && "),
+  "postCreateCommand": "python -m venv .venv && . .venv/bin/activate && pip install --upgrade pip && pip install --no-cache-dir qtpy astropy numpy scipy jplephem matplotlib uncertainties loguru pint-pulsar && echo 'source /workspaces/pylk/.venv/bin/activate' >> ~/.bashrc",
 
   "customizations": {
     "vscode": {
