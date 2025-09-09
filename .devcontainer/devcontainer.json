@@ -1,7 +1,41 @@
 {
   "name": "PINT GUI Devcontainer",
-  "build": {
-    "dockerfile": "Dockerfile"
+  "build": { "dockerfile": "Dockerfile" },
+
+  // Let the base image's keep-alive command run.
+  //"overrideCommand": false,
+
+  "remoteUser": "vscode",
+
+  "containerEnv": {
+    "DISPLAY": "host.docker.internal:0",
+    "QT_QPA_PLATFORM": "xcb",
+    "QT_X11_NO_MITSHM": "1"
   },
-  "remoteUser": "root"
+
+   Put the project venv first on PATH (explicit, no ${PATH})
+  "remoteEnv": {
+    "PATH": "/workspaces/pylk/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+  },
+
+  "postCreateCommand": [
+    "python -m venv .venv",
+    ". .venv/bin/activate",
+    "pip install --upgrade pip",
+    // core deps + PINT; -e . for your package
+    "pip install --no-cache-dir qtpy astropy numpy scipy jplephem matplotlib uncertainties loguru pint-pulsar",
+    "pip install -e .",
+    // auto-activate venv for interactive shells
+    "echo 'source /workspaces/pylk/.venv/bin/activate' >> ~/.bashrc"
+  ].join(" && "),
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscodevim",
+        "ms-vscode-remote.remote-containers"
+      ]
+    }
+  }
 }
+
