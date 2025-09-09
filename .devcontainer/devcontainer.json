@@ -1,0 +1,7 @@
+{
+  "name": "PINT GUI Devcontainer",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "remoteUser": "root"
+}
