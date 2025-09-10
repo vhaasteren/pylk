@@ -26,10 +26,10 @@
 ## Resolving Merge Conflicts with AI (Full)
 When conflicts happen, you can prompt your LLM:
 
-> Resolve merge conflicts in this patch:
+> Resolve merge conflicts in these files:
 > ```
-> {conflicted_patch}
+> {conflicted_files}
 > ```
-> Provide a **unified diff** with resolved conflicts and a brief explanation of each hunk.
+> Provide the **resolved files** with a brief explanation of each change.
 
 See `GLOSSARY.md` for key terms.

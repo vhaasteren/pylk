@@ -8,4 +8,4 @@ RAG context:
 Output:
 - Short answer
 - Bullet citations (file:lines)
-- If code change requested: unified diff
+- If code change requested: direct file modifications

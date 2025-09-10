@@ -5,6 +5,6 @@
 - **No direct PINT in widgets**; PINT calls live in `models/` or `controllers/`.
 - Prefer signals/slots over polling; views subscribe, controllers emit.
 - Short synchronous ops on UI thread are OK; long ops → worker thread (future).
-- LLM changes should land as **diffs**; add/update tests when logic changes.
+- LLM changes should be made **directly to files**; add/update tests when logic changes.
 
 Formatting: Black (100 cols). Lint: Ruff (incl. import sort). Types: mypy for `pylk/*`.

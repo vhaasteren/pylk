@@ -127,7 +127,7 @@ repos:
 - **No direct PINT in widgets**; PINT calls live in `models/` or `controllers/`.
 - Prefer signals/slots over polling; views subscribe, controllers emit.
 - Short synchronous ops on UI thread are OK; long ops → worker thread (future).
-- LLM changes should land as **diffs**; add/update tests when logic changes.
+- LLM changes should be made **directly to files**; add/update tests when logic changes.
 
 Formatting: Black (100 cols). Lint: Ruff (incl. import sort). Types: mypy for `pylk/*`.
 ```
@@ -160,11 +160,11 @@ Formatting: Black (100 cols). Lint: Ruff (incl. import sort). Types: mypy for `p
 ## Resolving Merge Conflicts with AI (Full)
 When conflicts happen, you can prompt your LLM:
 
-> Resolve merge conflicts in this patch:
+> Resolve merge conflicts in these files:
 > ```
-> {conflicted_patch}
+> {conflicted_files}
 > ```
-> Provide a **unified diff** with resolved conflicts and a brief explanation of each hunk.
+> Provide the **resolved files** with a brief explanation of each change.
 
 See `GLOSSARY.md` for key terms.
 ````
@@ -210,7 +210,7 @@ Follow `prompts/style_constraints.md`.
 
 Deliverables:
 1) Short plan (steps + risks)
-2) **Unified diff** patch
+2) **Direct file modifications**
 3) Tests (if logic changed)
 4) Post-merge follow-ups (bullets)
 
@@ -223,9 +223,9 @@ RAG context (optional; paste if relevant to goal):
 ```md
 You are a reviewer.
 
-Review this patch for Pylk:
+Review these changes for Pylk:
 
-{patch}
+{changes}
 
 Use `prompts/style_constraints.md`. Output:
 - BLOCKING issues
@@ -255,7 +255,7 @@ RAG context:
 Output:
 - Short answer
 - Bullet citations (file:lines)
-- If code change requested: unified diff
+- If code change requested: direct file modifications
 ```
 
 ---
@@ -268,7 +268,7 @@ Output:
 
 ```text
 # .cursorrules
-- Produce UNIFIED DIFFS unless I ask for prose.
+- Make changes directly to files unless I ask for prose.
 - Keep widgets thin; push logic to controllers/models.
 - No PINT usage in widgets.
 - When logic changes, add/update tests in `tests/`.
@@ -277,12 +277,12 @@ Output:
 ```
 
 * **Model**: GPT-4.1 or Claude 3.5 Sonnet if available; otherwise GPT-4o mini/Haiku for quick edits.
-* **Composer**: Use repo context; enable “diffs only,” “ask before multi-file edits,” “generate tests”.
+* **Composer**: Use repo context; enable "ask before multi-file edits," "generate tests".
 
 ### 4.2 Non-Cursor options (Full)
 
-* **VS Code + Copilot Chat**: keep a `CONTEXT.md` buffer you paste `ragcode dump` into; ask for diffs.
-* **Aider** CLI: `aider --model gpt-4o "Implement KernelController restart"`; it applies diffs automatically.
+* **VS Code + Copilot Chat**: keep a `CONTEXT.md` buffer you paste `ragcode dump` into; ask for direct file modifications.
+* **Aider** CLI: `aider --model gpt-4o "Implement KernelController restart"`; it applies changes automatically.
 * **Jupyter** for design: run prompts from `/prompts` with `{rag_dump}` blocks.
 
 ---
@@ -423,7 +423,7 @@ In the presentation: show a slide contrasting **Fast** vs **Full** loops and exp
 
    * `make ai-plan GOAL="Out-of-process IPython kernel + Restart"`
    * Paste into `prompts/01_planner.md` with `{goal}` and optional `{rag_dump}`.
-   * Get plan → diff → tests → follow-ups.
+   * Get plan → file modifications → tests → follow-ups.
 
 2. **Code (Cursor)** (MVW)
 
@@ -431,7 +431,7 @@ In the presentation: show a slide contrasting **Fast** vs **Full** loops and exp
    * If PINT internals needed:
      `tools/rag/dump_for_cursor.sh "residuals calc in PINT" OUT=.cursor/rag_context.md`
      (the agent will see the file).
-   * Apply diff; run `make fast` → iterate.
+   * Apply changes; run `make fast` → iterate.
 
 3. **Before PR** (Full)
 
@@ -444,7 +444,7 @@ In the presentation: show a slide contrasting **Fast** vs **Full** loops and exp
 
 ## 9) Non-Cursor notes (in case of non-Cursor workflow)
 
-* **VS Code + Copilot Chat**: keep a `CONTEXT.md` tab; paste `ragcode dump` there and instruct Copilot to propose a **unified diff** only.
+* **VS Code + Copilot Chat**: keep a `CONTEXT.md` tab; paste `ragcode dump` there and instruct Copilot to make **direct file modifications**.
 * **Aider**: first-class agentic coding with built-in repo RAG; nice to demo as an alternative.
 
 ---

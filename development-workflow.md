@@ -453,21 +453,19 @@ You can follow the same MVW ↔ Full loop without Cursor. Below are step-by-step
    make rag-dump QUERY="PINT residuals calculation" OUT=CONTEXT.md
    ```
    Keep `CONTEXT.md` open in a VS Code tab.
-2. **Ask Copilot Chat** for a **unified diff** implementing your goal:
+2. **Ask AI to implement your goal**:
 
    ```
-   Implement the goal below using a UNIFIED DIFF only.
+   Implement the goal below by making the necessary file changes directly.
    Goal: "<your goal here>"
    Constraints: follow prompts/style_constraints.md (thin widgets, no PINT in widgets, logic in controllers/models). Add/update tests when logic changes.
    Use CONTEXT.md as authoritative context where relevant.
    ```
 
-3. **Apply the diff**:
-   * If Copilot returns a patch, save it as `change.patch` and apply:
-     ```bash
-     git apply --reject --whitespace=fix change.patch
-     ```
-   * If it returns inline edits, apply them manually (or ask Copilot to generate a patch).
+3. **Review and apply changes**:
+   * AI will make changes directly to files
+   * Review the changes in your editor
+   * Accept or reject individual changes as needed
 4. **Run fast loop**:
    ```bash
    make fast
@@ -512,10 +510,10 @@ Use this when you want to plan outside the IDE or show the flow in a demo:
 2. In a notebook cell, paste the planner prompt (from `prompts/01_planner.md`) with the printed RAG block.
 3. Ask for:
    * Short plan
-   * Unified diff patch
+   * Direct file modifications
    * Tests (if logic changes)
    * Follow-ups
-4. Apply the diff locally, then run:
+4. Apply the changes locally, then run:
    ```bash
    make fast
    make full
@@ -528,7 +526,7 @@ Use this when you want to plan outside the IDE or show the flow in a demo:
 
 ### Tips & caveats
 
-* Prefer **unified diffs** from AI tools to reduce "drift."
+* Prefer **direct file modifications** from AI tools to reduce "drift."
 * Keep widgets thin; push logic to controllers/models.
 * For PINT integration, use `make rag-dump` to inject authoritative context; skip RAG for small local refactors.
 * Use **Fast mode** during spikes:
@@ -539,7 +537,7 @@ Use this when you want to plan outside the IDE or show the flow in a demo:
   ```bash
   make full
   ```
-* If merge conflicts occur, use the conflict-resolution prompt in `CONTRIBUTING.md` (AI-assisted resolution via unified diff).
+* If merge conflicts occur, use the conflict-resolution prompt in `CONTRIBUTING.md` (AI-assisted resolution via direct file modifications).
 
 ---
 

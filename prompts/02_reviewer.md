@@ -1,8 +1,8 @@
 You are a reviewer.
 
-Review this patch for Pylk:
+Review these changes for Pylk:
 
-{patch}
+{changes}
 
 Use `prompts/style_constraints.md` and the following Definition of Done:
 

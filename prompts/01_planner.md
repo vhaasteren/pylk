@@ -6,7 +6,7 @@ Follow `prompts/style_constraints.md`.
 
 Deliverables:
 1) Short plan (steps + risks)
-2) **Unified diff** patch
+2) **Direct file modifications** (I'll implement the changes directly)
 3) Tests (if logic changed)
 4) Post-merge follow-ups (bullets)
 
