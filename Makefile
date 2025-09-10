@@ -7,7 +7,7 @@ ai-plan:  # quick block to paste into 01_planner.md
 	@echo "Goal: $(GOAL)"
 	@echo ""
 	@echo "RAG context:"
-	@ragcode dump -q "$(GOAL)" --k 12 --out - | sed -e 's/^/    /'
+	@ragcode dump -q "$(GOAL)" --k 12 --profile pint --out - | sed -e 's/^/    /'
 
 # Quality gates
 lint:
