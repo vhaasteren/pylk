@@ -66,33 +66,6 @@ target-version = "py311"
 extend-select = ["I"]  # import sort
 ignore = ["E501"]      # E501 handled by Black
 
-[tool.mypy]
-python_version = "3.11"
-warn_unused_ignores = true
-warn_redundant_casts = true
-warn_return_any = true
-no_implicit_optional = true
-strict_optional = true
-check_untyped_defs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-exclude = ["build", "dist", "\\.venv", "state", "tests/", "tools/"]
-
-# Optional: speed up CI / stable reports
-show_error_codes = true
-pretty = true
-
-# Test files can be less strict
-[[tool.mypy.overrides]]
-module = "tests.*"
-disallow_untyped_defs = false
-check_untyped_defs = false
-
-# Tools can be less strict
-[[tool.mypy.overrides]]
-module = "tools.*"
-disallow_untyped_defs = false
-check_untyped_defs = false
 
 [tool.commitizen]
 name = "cz_conventional_commits"

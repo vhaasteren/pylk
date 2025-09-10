@@ -5,23 +5,12 @@ from unittest.mock import Mock
 
 import pytest
 from qtpy.QtGui import QKeySequence
-from qtpy.QtWidgets import QApplication
 
 from pylk.main_window import MainWindow
 
 
 @pytest.fixture
-def app():
-    """Create QApplication for testing."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    yield app
-    app.quit()
-
-
-@pytest.fixture
-def main_window(app):
+def main_window(qapp):
     """Create MainWindow for testing."""
     return MainWindow()
 

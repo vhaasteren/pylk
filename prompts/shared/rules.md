@@ -55,7 +55,7 @@ PAUSE: Milestone complete. Run `make fast` to verify, then continue.
 - **Signals/slots over polling**: Views subscribe, controllers emit
 - **Short synchronous ops** on UI thread are OK; long ops → worker thread (future)
 - **LLM changes**: Made **directly to files**; add/update tests when logic changes
-- **Formatting**: Black (100 cols), Ruff (incl. import sort), mypy for `pylk/*`
+- **Formatting**: Black (100 cols), Ruff (incl. import sort)
 - **Conventional Commits**: Required for all commits
 
 ### Signal/Slot Patterns

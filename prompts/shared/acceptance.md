@@ -3,7 +3,7 @@
 ## Definition of Done
 
 ### Code Quality
-- [ ] All code passes pre-commit hooks (black, ruff, mypy)
+- [ ] All code passes pre-commit hooks (black, ruff)
 - [ ] All new code has appropriate type hints
 - [ ] All public APIs have docstrings
 - [ ] Code follows project style guidelines

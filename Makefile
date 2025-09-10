@@ -29,6 +29,15 @@ lint-no-pint-in-widgets:
 test:
 	pytest -q
 
+# PINT installation
+install-pint:
+	@echo "Installing PINT (pint-pulsar)..."
+	@./tools/install-pint.sh
+
+# Check if PINT is available
+check-pint:
+	@python -c "import pint; print(f'✅ PINT version: {pint.__version__}')" || echo "❌ PINT not available - run 'make install-pint'"
+
 coverage:
 	pytest --cov=pylk --cov-report=term-missing
 
@@ -40,6 +49,7 @@ fast:  ## MVW: minimal checks for quick iteration
 full:  ## Full: everything green or fail
 	pre-commit run --all-files
 	$(MAKE) lint-no-pint-in-widgets
+	$(MAKE) check-pint
 	pytest -q
 
 # --- Repo snapshots (for LLM workflows) -------------------------------------
@@ -130,6 +140,8 @@ help:
 	@echo "  lint-no-pint-in-widgets - check no PINT imports in widgets"
 	@echo "  test              - run pytest"
 	@echo "  coverage          - run pytest with coverage report"
+	@echo "  install-pint      - install PINT (pint-pulsar) with fallback strategies"
+	@echo "  check-pint        - check if PINT is available and show version"
 	@echo "  fast              - minimal checks for quick iteration"
 	@echo "  full              - full quality gate (pre-commit + pytest + PINT check)"
 	@echo ""
