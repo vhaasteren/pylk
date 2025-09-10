@@ -65,6 +65,13 @@ You should see `--listen tcp` in the output. If you see `--nolisten tcp`, XQuart
 
 ## Running the Application
 
+### ⚠️ Important: X11 Forwarding Setup
+**After every reboot**, you need to allow X11 connections from Docker:
+```bash
+xhost +localhost
+```
+This is required for GUI applications to work in the Docker container.
+
 ### Start the GUI Application
 Once the container is running, you can start the PINT GUI:
 
@@ -73,7 +80,7 @@ Once the container is running, you can start the PINT GUI:
 source .venv/bin/activate
 
 # Run the main application
-python pylk/app.py
+pylk
 ```
 
 ### Alternative: Run pintk directly
@@ -87,22 +94,22 @@ pintk
 ### GUI Display Issues
 If you get "couldn't connect to display" errors:
 
-1. **Check XQuartz is running**:
+1. **First, try the X11 forwarding command** (most common fix):
+   ```bash
+   xhost +localhost
+   ```
+
+2. **Check XQuartz is running**:
    ```bash
    ps aux | grep Xquartz
    ```
    Should show `--listen tcp`
 
-2. **Verify DISPLAY variable**:
+3. **Verify DISPLAY variable**:
    ```bash
    echo $DISPLAY
    ```
    Should show `host.docker.internal:0`
-
-3. **Test X11 forwarding**:
-   ```bash
-   xhost +localhost
-   ```
 
 4. **If still not working**:
    - Reboot your Mac
