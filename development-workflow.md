@@ -435,3 +435,114 @@ SKIP=mypy make fast
 - **Quality gates**: Use `make fast` and `make full` appropriately
 
 This workflow ensures consistent, high-quality development while maintaining the project's architectural principles.
+
+---
+
+## Non-Cursor Workflow (VS Code, Aider, Jupyter)
+
+You can follow the same MVW ↔ Full loop without Cursor. Below are step-by-step alternatives.
+
+### VS Code + Copilot Chat (MVW)
+1. **Prep context** (only if you need PINT internals or larger context):
+   ```bash
+   make rag-dump QUERY="PINT residuals calculation" OUT=CONTEXT.md
+   ```
+   Keep `CONTEXT.md` open in a VS Code tab.
+2. **Ask Copilot Chat** for a **unified diff** implementing your goal:
+
+   ```
+   Implement the goal below using a UNIFIED DIFF only.
+   Goal: "<your goal here>"
+   Constraints: follow prompts/style_constraints.md (thin widgets, no PINT in widgets, logic in controllers/models). Add/update tests when logic changes.
+   Use CONTEXT.md as authoritative context where relevant.
+   ```
+
+3. **Apply the diff**:
+   * If Copilot returns a patch, save it as `change.patch` and apply:
+     ```bash
+     git apply --reject --whitespace=fix change.patch
+     ```
+   * If it returns inline edits, apply them manually (or ask Copilot to generate a patch).
+4. **Run fast loop**:
+   ```bash
+   make fast
+   ```
+5. **Before PR**:
+   ```bash
+   make full
+   ```
+6. **Optional**: log your prompt/response for the presentation
+   ```bash
+   make log-prompt PROMPT="Implement <goal>" RESPONSE="<short summary or link to patch>"
+   ```
+
+### Aider CLI (Agentic coding; MVW or Full)
+
+1. **Install** Aider (outside the container if needed).
+2. **Run with model of your choice**:
+   ```bash
+   aider --model gpt-4o --yes --subtree pylk "Implement <goal> following prompts/style_constraints.md. Generate tests for any logic changes."
+   ```
+
+   Tips:
+   * Paste `CONTEXT.md` content if touching PINT internals:
+     ```bash
+     make rag-dump QUERY="where PINT handles <topic>" OUT=.aider_context.md
+     ```
+   * Aider applies diffs for you; review its commit messages and ensure Conventional Commits.
+3. **Quality gates**:
+   ```bash
+   make fast
+   make full
+   ```
+
+### Jupyter / Notebook-first Planning (Design & review)
+
+Use this when you want to plan outside the IDE or show the flow in a demo:
+
+1. Generate context for planning:
+   ```bash
+   make ai-plan GOAL="Add KernelController restart"
+   ```
+2. In a notebook cell, paste the planner prompt (from `prompts/01_planner.md`) with the printed RAG block.
+3. Ask for:
+   * Short plan
+   * Unified diff patch
+   * Tests (if logic changes)
+   * Follow-ups
+4. Apply the diff locally, then run:
+   ```bash
+   make fast
+   make full
+   ```
+
+### Model choices & fallbacks
+
+* **Premium** (if available): GPT-4.5 or Claude 4 Sonnet for planning/review; other for quick edits.
+* **Open/local**: Llama-based models via Aider/CLI can work well for diffs; pair with `CONTEXT.md` to ground PINT integration.
+
+### Tips & caveats
+
+* Prefer **unified diffs** from AI tools to reduce "drift."
+* Keep widgets thin; push logic to controllers/models.
+* For PINT integration, use `make rag-dump` to inject authoritative context; skip RAG for small local refactors.
+* Use **Fast mode** during spikes:
+  ```bash
+  make fast
+  ```
+  and **Full mode** before pushing:
+  ```bash
+  make full
+  ```
+* If merge conflicts occur, use the conflict-resolution prompt in `CONTRIBUTING.md` (AI-assisted resolution via unified diff).
+
+---
+
+## Definition of Done
+
+- [ ] Code implements the requested feature (per `01_planner.md` goal).
+- [ ] Code follows `prompts/style_constraints.md` (thin UI, no PINT in widgets).
+- [ ] Tests cover new logic (unit tests for models/controllers, integration tests for UI).
+- [ ] `make full` passes (pre-commit, pytest).
+- [ ] Manual testing confirms functionality (e.g., GUI interactions work).
+- [ ] Commit message follows Conventional Commits.

@@ -1,5 +1,7 @@
 from pytestqt.qtbot import QtBot
+
 from pylk.main_window import MainWindow
+
 
 def test_main_window_init(qtbot: QtBot):
     win = MainWindow()

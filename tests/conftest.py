@@ -1,8 +1,11 @@
 import pytest
 
+
 @pytest.fixture(scope="session")
 def qapp():
-    from qtpy.QtWidgets import QApplication
     import sys
+
+    from qtpy.QtWidgets import QApplication
+
     app = QApplication.instance() or QApplication(sys.argv)
     return app

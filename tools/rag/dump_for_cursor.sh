@@ -11,5 +11,9 @@ if [[ -z "$QUERY" ]]; then
 fi
 
 mkdir -p .cursor
-ragcode dump -q "$QUERY" --k "$K" --out "$OUT" --profile "$PROFILE"
+if ! ragcode dump -q "$QUERY" --k "$K" --out "$OUT" --profile "$PROFILE"; then
+  echo "Error: RAG query failed. Check profile ($PROFILE) and index (~/.ragcode/indexes/$PROFILE)." >&2
+  echo "Try: ragcode index --profile pint --incremental" >&2
+  exit 1
+fi
 echo "Wrote RAG context to $OUT"
