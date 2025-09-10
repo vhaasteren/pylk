@@ -36,6 +36,9 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     git \
     curl \
     wget \
+    make \
+    vim \
+    nano \
  && rm -rf /var/lib/apt/lists/* \
  && ln -sf /usr/bin/qmake6 /usr/bin/qmake
 

@@ -19,14 +19,24 @@
   "remoteEnv": {
     "PATH": "/workspaces/pylk/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   },
-  "postCreateCommand": "python -m venv .venv && echo '/usr/lib/python3/dist-packages' > .venv/lib/python3.11/site-packages/system-packages.pth && . .venv/bin/activate && pip install --upgrade pip && pip install --no-cache-dir qtpy astropy numpy scipy jplephem matplotlib uncertainties loguru pint-pulsar && echo 'source /workspaces/pylk/.venv/bin/activate' >> ~/.bashrc",
+  "postCreateCommand": "python -m venv .venv && echo '/usr/lib/python3/dist-packages' > .venv/lib/python3.11/site-packages/system-packages.pth && . .venv/bin/activate && pip install --upgrade pip && pip install --no-cache-dir qtpy astropy numpy scipy jplephem matplotlib uncertainties loguru pint-pulsar pre-commit ruff black mypy commitizen detect-secrets pytest pytest-qt && pip install -e . && pre-commit install --hook-type pre-commit --hook-type pre-push --hook-type commit-msg && echo 'source /workspaces/pylk/.venv/bin/activate' >> ~/.bashrc",
 
 
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-vscode.vscodevim",
-        "ms-vscode-remote.remote-containers"
+        "ms-vscode-remote.remote-containers",
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "charliermarsh.ruff",
+        "ms-python.mypy-type-checker",
+        "ms-python.pytest",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "ms-vscode.makefile-tools",
+        "github.vscode-pull-request-github",
+        "eamodio.gitlens"
       ]
     }
   },
