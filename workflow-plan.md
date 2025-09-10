@@ -66,6 +66,8 @@ update_changelog_on_bump = true
 version_provider = "scm"
 ```
 
+> **Note**: Commitizen is configured to automatically update CHANGELOG.md on version bumps. For manual changes, update the [Unreleased] section.
+
 ### 1.3 .pre-commit-config.yaml (MVW + Full)
 
 * **MVW hooks**: black, ruff, detect-secrets, commitizen (commit-msg), basic mypy.

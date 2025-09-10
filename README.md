@@ -150,6 +150,7 @@ pylk/
 │   └── devcontainer.json  # VS Code dev container settings
 ├── pylk/                  # Main application code
 │   └── app.py            # Main application entry point
+├── CHANGELOG.md          # Project changelog
 └── README.md             # This file
 ```
 

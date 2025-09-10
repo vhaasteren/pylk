@@ -21,6 +21,7 @@
 - Keep PRs small (< ~300 LOC changes).
 - Include tests for non-UI logic (controllers/models).
 - Pass `pre-commit` + `pytest` before pushing.
+- Update CHANGELOG.md for user-facing changes.
 
 ## Resolving Merge Conflicts with AI (Full)
 When conflicts happen, you can prompt your LLM:

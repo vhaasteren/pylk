@@ -185,7 +185,12 @@ make full
 # - MyPy type checking: mypy pylk/
 ```
 
-#### 4.2 Commit Changes
+#### 4.2 Update Documentation
+- [ ] Update CHANGELOG.md for user-facing changes
+- [ ] Update README.md if setup instructions changed
+- [ ] Update API docs if interfaces changed
+
+#### 4.3 Commit Changes
 ```bash
 # Stage changes
 git add .
@@ -546,3 +551,4 @@ Use this when you want to plan outside the IDE or show the flow in a demo:
 - [ ] `make full` passes (pre-commit, pytest).
 - [ ] Manual testing confirms functionality (e.g., GUI interactions work).
 - [ ] Commit message follows Conventional Commits.
+- [ ] CHANGELOG.md updated for user-facing changes.
