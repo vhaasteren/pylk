@@ -11,8 +11,17 @@ from typing import Any
 import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from qtpy.QtCore import QObject, Slot
-from qtpy.QtWidgets import QFileDialog, QHBoxLayout, QPushButton, QSizePolicy, QVBoxLayout, QWidget
+from qtpy.QtCore import QEvent, Slot
+from qtpy.QtWidgets import (
+    QFileDialog,
+    QHBoxLayout,
+    QPushButton,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
+
+from ..models.pulsar import PulsarModel
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +31,7 @@ class PlkView(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self._model: QObject | None = None
+        self._model: PulsarModel | None = None
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -35,7 +44,7 @@ class PlkView(QWidget):
         self._canvas = FigureCanvas(self._figure)
 
         # Set size policies for proper resizing
-        self._canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self._canvas.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self._canvas.setMinimumSize(800, 400)  # Minimum size for the canvas
 
         layout.addWidget(self._canvas)
@@ -56,16 +65,16 @@ class PlkView(QWidget):
         self._ax.set_title("No data loaded")
 
         # Set size policy for the widget itself
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
-    def showEvent(self, event) -> None:
+    def showEvent(self, event: QEvent) -> None:
         """Ensure proper sizing when the widget is shown."""
-        super().showEvent(event)
+        super().showEvent(event)  # type: ignore[arg-type]
         self._ensure_minimum_width()
 
-    def resizeEvent(self, event) -> None:
+    def resizeEvent(self, event: QEvent) -> None:
         """Handle resize events to maintain proper sizing."""
-        super().resizeEvent(event)
+        super().resizeEvent(event)  # type: ignore[arg-type]
         # Use a timer to avoid infinite recursion during resize
         from qtpy.QtCore import QTimer
 
@@ -73,8 +82,9 @@ class PlkView(QWidget):
 
     def _ensure_minimum_width(self) -> None:
         """Ensure the widget takes up at least 80% of the main window width."""
-        if self.parent() and hasattr(self.parent(), "width"):
-            parent_width = self.parent().width()
+        parent = self.parent()
+        if parent and hasattr(parent, "width"):
+            parent_width = parent.width()
             min_width = int(parent_width * 0.8)  # 80% of parent width
             current_width = self.width()
 
@@ -85,7 +95,7 @@ class PlkView(QWidget):
                     f"Resized PlkView to {min_width}px (80% of parent width {parent_width}px)"
                 )
 
-    def set_model(self, model: QObject) -> None:
+    def set_model(self, model: PulsarModel) -> None:
         """Connect to a PulsarModel's signals.
 
         Args:
@@ -104,7 +114,10 @@ class PlkView(QWidget):
             self._model.residualsChanged.connect(self.on_residuals_changed)
 
             # If model already has residuals data, plot it immediately
-            if hasattr(self._model, "residuals") and self._model.residuals is not None:
+            if (
+                hasattr(self._model, "residuals")
+                and getattr(self._model, "residuals", None) is not None
+            ):
                 self._plot_current_residuals()
 
     def _plot_current_residuals(self) -> None:

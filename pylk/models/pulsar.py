@@ -15,25 +15,30 @@ logger = logging.getLogger(__name__)
 
 # Try to import PINT, handle gracefully if not available
 try:
-    import pint
-    from pint.models import get_model_and_toas
-    from pint.residuals import Residuals
+    import pint  # type: ignore[import-untyped]
+    from pint.models import get_model_and_toas  # type: ignore[import-untyped]
+    from pint.residuals import Residuals  # type: ignore[import-untyped]
 
     PINT_AVAILABLE = True
 except ImportError:
     PINT_AVAILABLE = False
 
     # Create dummy classes for type hints
-    class pint:
+    class _DummyPint:
         class models:
             @staticmethod
-            def get_model_and_toas(*args, **kwargs):
+            def get_model_and_toas(*args: Any, **kwargs: Any) -> tuple[Any, Any]:
                 raise ImportError("PINT not available")
 
         class residuals:
             class Residuals:
-                def __init__(self, *args, **kwargs):
+                def __init__(self, *args: Any, **kwargs: Any) -> None:
                     raise ImportError("PINT not available")
+
+    # Create module-like objects
+    pint = _DummyPint()
+    get_model_and_toas = pint.models.get_model_and_toas
+    Residuals = pint.residuals.Residuals
 
 
 class PulsarModel(QObject):

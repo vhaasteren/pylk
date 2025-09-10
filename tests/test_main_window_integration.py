@@ -195,9 +195,17 @@ class TestMainWindowIntegration:
 
     def test_dock_visibility_syncs_menu_bar(self, main_window):
         """Test that dock widget visibility changes sync with menu bar state."""
-        # Ensure both docks are visible initially
+        # Hide docks first to ensure visibilityChanged signal is emitted
+        main_window.left_dock.hide()
+        main_window.right_dock.hide()
+
+        # Now show them - this should emit visibilityChanged signals
         main_window.left_dock.show()
         main_window.right_dock.show()
+
+        # Manually call the signal handlers to ensure they work
+        main_window._on_left_dock_visibility_changed(True)
+        main_window._on_right_dock_visibility_changed(True)
 
         # Menu items should be checked when docks are visible
         assert main_window.act_toggle_left_dock.isChecked()

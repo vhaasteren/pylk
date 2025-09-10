@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import sys
 import traceback
+from typing import Any
 
 from qtpy.QtCore import QCoreApplication, Qt
 from qtpy.QtGui import QIcon
@@ -12,11 +13,11 @@ from qtpy.QtWidgets import QApplication, QMessageBox
 from .main_window import MainWindow
 
 
-def _install_excepthook():
-    def handle_exception(exc_type, exc, tb):
+def _install_excepthook() -> None:
+    def handle_exception(exc_type: type[BaseException], exc: BaseException, tb: Any) -> None:
         traceback.print_exception(exc_type, exc, tb)
         msg = QMessageBox()
-        msg.setIcon(QMessageBox.Critical)
+        msg.setIcon(QMessageBox.Icon.Critical)
         msg.setWindowTitle("Unexpected Error")
         msg.setText("An unexpected error occurred.")
         msg.setInformativeText(str(exc))
@@ -43,7 +44,7 @@ def _set_qt_attribute(name: str, enable: bool = True) -> None:
         pass
 
 
-def _configure_qt():
+def _configure_qt() -> None:
     # Environment for X11 inside a devcontainer
     os.environ.setdefault("QT_QPA_PLATFORM", "xcb")
     os.environ.setdefault("QT_X11_NO_MITSHM", "1")
