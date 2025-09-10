@@ -5,23 +5,12 @@ from unittest.mock import Mock
 
 import numpy as np
 import pytest
-from qtpy.QtWidgets import QApplication
 
 from pylk.widgets.plk_view import PlkView
 
 
 @pytest.fixture
-def app():
-    """Create QApplication for testing."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    yield app
-    app.quit()
-
-
-@pytest.fixture
-def view(app):
+def view(qapp):
     """Create PlkView for testing."""
     return PlkView()
 
