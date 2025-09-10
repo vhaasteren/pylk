@@ -15,6 +15,9 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from .controllers.project import ProjectController
+from .widgets.plk_view import PlkView
+
 
 class CentralPlaceholder(QWidget):
     """Temporary central widget until plotting/view panes are added."""
@@ -39,6 +42,13 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Pylk")
         self._par_path: str | None = None
         self._tim_path: str | None = None
+
+        # Initialize controller
+        self._project_controller = ProjectController(self)
+        self._connect_controller_signals()
+
+        # Set minimum window size (matching pintk)
+        self.setMinimumSize(1000, 800)
 
         self._init_ui()
         self._restore_geometry()
@@ -70,6 +80,12 @@ class MainWindow(QMainWindow):
         self.act_quit.setShortcut(QKeySequence.Quit)
         self.act_quit.triggered.connect(self.close)
 
+        # Plot actions
+        self.act_save_plot = QAction("&Save Plot…", self)
+        self.act_save_plot.setShortcut(QKeySequence("Ctrl+S"))
+        self.act_save_plot.triggered.connect(self._on_save_plot)
+        self.act_save_plot.setEnabled(False)  # Disabled until plot is available
+
         # Edit/Preferences
         self.act_prefs = QAction("&Preferences…", self)
         self.act_prefs.setShortcut(QKeySequence("Ctrl+,"))
@@ -92,6 +108,8 @@ class MainWindow(QMainWindow):
         m_file.addAction(self.act_open_tim)
         m_file.addSeparator()
         m_file.addAction(self.act_close)
+        m_file.addSeparator()
+        m_file.addAction(self.act_save_plot)
         m_file.addSeparator()
         m_file.addAction(self.act_quit)
 
@@ -122,6 +140,8 @@ class MainWindow(QMainWindow):
 
     def _create_central(self) -> None:
         self._central = CentralPlaceholder(self)
+        self._plk_view = PlkView(self)
+        self._plk_view.hide()  # Hide initially until project is loaded
         self.setCentralWidget(self._central)
 
     def _create_docks(self) -> None:
@@ -138,6 +158,10 @@ class MainWindow(QMainWindow):
         self.right_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
         self.right_dock.setWidget(QLabel("Inspector panel placeholder"))
         self.addDockWidget(Qt.RightDockWidgetArea, self.right_dock)
+
+        # Connect dock visibility changes to menu bar state
+        self.left_dock.visibilityChanged.connect(self._on_left_dock_visibility_changed)
+        self.right_dock.visibilityChanged.connect(self._on_right_dock_visibility_changed)
 
     # ---------- Handlers ----------
     def _on_open_par(self) -> None:
@@ -161,11 +185,14 @@ class MainWindow(QMainWindow):
         self._maybe_enable_project()
 
     def _maybe_enable_project(self) -> None:
-        """In the real app, this is where you'd initialize your Pulsar/PINT backend."""
+        """Initialize project when both PAR and TIM files are loaded."""
         if self._par_path and self._tim_path:
-            self._set_status("Project ready (PAR + TIM loaded).")
-            # TODO: replace central widget with your plotting/controls composite
-            # and initialize your data/model controller.
+            self._set_status("Loading project...")
+            try:
+                self._project_controller.open_project(self._par_path, self._tim_path)
+            except Exception as e:
+                self._set_status(f"Error loading project: {e}")
+                QMessageBox.critical(self, "Project Error", f"Failed to load project:\n{e}")
         else:
             which = "PAR missing" if not self._par_path else "TIM missing"
             self._set_status(f"Waiting for files… ({which})")
@@ -173,8 +200,8 @@ class MainWindow(QMainWindow):
     def _on_close_project(self) -> None:
         self._par_path = None
         self._tim_path = None
+        self._project_controller.close_project()
         self._set_status("Project closed.")
-        # TODO: tear down models/views once implemented.
 
     def _on_prefs(self) -> None:
         QMessageBox.information(
@@ -182,6 +209,17 @@ class MainWindow(QMainWindow):
             "Preferences",
             "Preferences dialog stub.\n\nAdd settings pages for PINT paths, plotting, themes, etc.",
         )
+
+    def _on_save_plot(self) -> None:
+        """Handle save plot action."""
+        if hasattr(self, "_plk_view") and self._plk_view:
+            self._plk_view._save_plot()
+        else:
+            QMessageBox.warning(
+                self,
+                "No Plot Available",
+                "No plot is currently available to save. Please load a PAR+TIM project first.",
+            )
 
     def _on_about(self) -> None:
         QMessageBox.about(
@@ -197,6 +235,76 @@ class MainWindow(QMainWindow):
 
     def _toggle_right_dock(self, checked: bool) -> None:
         self.right_dock.setVisible(checked)
+
+    def _on_left_dock_visibility_changed(self, visible: bool) -> None:
+        """Handle left dock visibility changes to sync menu bar state."""
+        self.act_toggle_left_dock.setChecked(visible)
+
+    def _on_right_dock_visibility_changed(self, visible: bool) -> None:
+        """Handle right dock visibility changes to sync menu bar state."""
+        self.act_toggle_right_dock.setChecked(visible)
+
+    def _connect_controller_signals(self) -> None:
+        """Connect project controller signals to UI updates."""
+        self._project_controller.projectLoaded.connect(self._on_project_loaded)
+        self._project_controller.projectClosed.connect(self._on_project_closed)
+
+    def _on_project_loaded(self, model) -> None:
+        """Handle project loaded signal."""
+        par_name = model.par_path.split("/")[-1] if model.par_path else "Unknown"
+        tim_name = model.tim_path.split("/")[-1] if model.tim_path else "Unknown"
+        self._set_status(f"Loaded PAR: {par_name} | TIM: {tim_name}")
+        self._show_plotting_view(model)
+
+    def _on_project_closed(self) -> None:
+        """Handle project closed signal."""
+        self._show_placeholder_view()
+
+    def _show_plotting_view(self, model) -> None:
+        """Switch to plotting view and connect to model."""
+        self._central.hide()
+        self._plk_view.show()
+        self.setCentralWidget(self._plk_view)
+
+        # Ensure PlkView takes up proper space
+        self._plk_view._ensure_minimum_width()
+
+        self._plk_view.set_model(model)
+
+        # Enable save plot action
+        self.act_save_plot.setEnabled(True)
+
+        # Connect to residuals changes for status updates
+        if hasattr(model, "residualsChanged"):
+            model.residualsChanged.connect(self._on_residuals_changed)
+
+    def _show_placeholder_view(self) -> None:
+        """Switch back to placeholder view."""
+        self._plk_view.hide()
+        self._central.show()
+        self.setCentralWidget(self._central)
+
+        # Disable save plot action
+        self.act_save_plot.setEnabled(False)
+
+    def _on_residuals_changed(self, payload) -> None:
+        """Handle residuals changed signal for status updates."""
+        if payload and isinstance(payload, dict):
+            n = payload.get("n", 0)
+            rms_us = payload.get("rms_us", 0.0)
+
+            # Get current PAR/TIM names for context
+            par_name = "Unknown"
+            tim_name = "Unknown"
+            if hasattr(self, "_project_controller") and self._project_controller.model:
+                if self._project_controller.model.par_path:
+                    par_name = self._project_controller.model.par_path.split("/")[-1]
+                if self._project_controller.model.tim_path:
+                    tim_name = self._project_controller.model.tim_path.split("/")[-1]
+
+            self._set_status(
+                f"Loaded PAR: {par_name} | TIM: {tim_name} | TOAs: {n} | RMS: {rms_us:.2f} μs"
+            )
 
     # ---------- Utilities ----------
     def _set_status(self, text: str) -> None:
