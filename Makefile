@@ -1,4 +1,4 @@
-.PHONY: rag-dump ai-plan lint test fast full pick-snapshot pylk-snapshot tests-snapshot full-snapshot
+.PHONY: rag-dump ai-plan lint test fast full pick-snapshot pylk-snapshot tests-snapshot full-snapshot api-snapshot status-snapshot meta-snapshot
 
 # Default values for RAG targets
 PROFILE ?= pint
@@ -65,6 +65,45 @@ full-snapshot:
 	@tools/repo_view/snapshot.sh > full-snapshot.txt
 	@echo "[rv] wrote full-snapshot.txt"
 
+# API surface snapshot (Python signatures)
+api-snapshot:
+	@python3 tools/repo_view/api_outline.py > api-snapshot.txt
+	@echo "[rv] wrote api-snapshot.txt"
+
+# Project status snapshot
+status-snapshot:
+	@echo "===== PROJECT STATUS =====" > status-snapshot.txt
+	@echo "Last Updated: $$(date)" >> status-snapshot.txt
+	@echo "" >> status-snapshot.txt
+	@echo "===== WORKING FEATURES =====" >> status-snapshot.txt
+	@echo "- Pre-fit residuals plotting (PAR+TIM → matplotlib)" >> status-snapshot.txt
+	@echo "- Save plot functionality (menu + button)" >> status-snapshot.txt
+	@echo "- Dock widget synchronization" >> status-snapshot.txt
+	@echo "- Real-time status bar updates" >> status-snapshot.txt
+	@echo "- Proper widget sizing (80% minimum width)" >> status-snapshot.txt
+	@echo "" >> status-snapshot.txt
+	@echo "===== KNOWN ISSUES =====" >> status-snapshot.txt
+	@echo "- None currently" >> status-snapshot.txt
+	@echo "" >> status-snapshot.txt
+	@echo "===== NEXT PRIORITIES =====" >> status-snapshot.txt
+	@echo "- [Add your next features here]" >> status-snapshot.txt
+	@echo "" >> status-snapshot.txt
+	@echo "===== ARCHITECTURE =====" >> status-snapshot.txt
+	@echo "MVC Pattern:" >> status-snapshot.txt
+	@echo "- Models: PulsarModel (PINT integration)" >> status-snapshot.txt
+	@echo "- Controllers: ProjectController (lifecycle)" >> status-snapshot.txt
+	@echo "- Views: PlkView (matplotlib), MainWindow (Qt)" >> status-snapshot.txt
+	@echo "" >> status-snapshot.txt
+	@echo "===== TEST STATUS =====" >> status-snapshot.txt
+	@make fast 2>&1 | tail -1 >> status-snapshot.txt
+	@echo "[rv] wrote status-snapshot.txt"
+
+# Meta snapshot (documentation without code)
+meta-snapshot:
+	@SNAPSHOT_EXCLUDES="pylk tests .devcontainer" \
+		tools/repo_view/snapshot.sh > meta-snapshot.txt
+	@echo "[rv] wrote meta-snapshot.txt"
+
 log-prompt:
 	@PROMPT="$(PROMPT)" RESPONSE="$(RESPONSE)" tools/log_prompt.sh
 
@@ -90,4 +129,7 @@ help:
 	@echo "  pylk-snapshot     - snapshot pylk/ into snapshot-pylk.txt"
 	@echo "  tests-snapshot    - snapshot tests/ into snapshot-tests.txt"
 	@echo "  full-snapshot     - snapshot entire codebase into full-snapshot.txt"
+	@echo "  api-snapshot      - snapshot Python API signatures into api-snapshot.txt"
+	@echo "  status-snapshot   - snapshot project status and architecture into status-snapshot.txt"
+	@echo "  meta-snapshot     - snapshot documentation (no code) into meta-snapshot.txt"
 	@echo "  log-prompt        - log a manual prompt/response to prompts/log/"
