@@ -1,7 +1,58 @@
 # pyproject.toml file specified at the root of the directory
 [build-system]
-requires = ["setuptools>=42", "wheel"]   # PEP 508 specifications.
+requires = ["setuptools>=42", "wheel", "setuptools_scm"]   # PEP 508 specifications.
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "pylk-pulsar"
+dynamic = ["version"]
+description = "A GUI for pint-pulsar"
+readme = "README.rst"
+requires-python = ">=3.8"
+license = {text = "BSD"}
+authors = [
+    {name = "Rutger van Haasteren", email = "rutger@vhaasteren.com"}
+]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "astropy>=4.0,!=4.0.1,!=4.0.1.post1",
+    "numpy>=1.17.0",
+    "scipy>=0.18.1",
+    "jplephem>=2.6",
+    "matplotlib>=1.5.3",
+    "uncertainties",
+    "loguru",
+    "pint-pulsar",
+    "qtpy",
+]
+
+[project.urls]
+Homepage = "https://github.com/vhaasteren/pylk"
+Documentation = "https://nanograv-pint.readthedocs.io/"
+
+[project.scripts]
+pylk = "pylk.app:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pylk"]
+
+[tool.setuptools.package-data]
+"*" = ["*.*"]
+
+[tool.setuptools_scm]
+write_to = "pylk/_version.py"
 
 [tool.black]
 line-length = 100
@@ -26,6 +77,3 @@ name = "cz_conventional_commits"
 tag_format = "v$version"
 update_changelog_on_bump = true
 version_provider = "scm"
-
-[project.scripts]
-pylk = "pylk.app:main"
