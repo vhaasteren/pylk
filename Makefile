@@ -1,4 +1,4 @@
-.PHONY: rag-dump ai-plan lint test fast full pick-snapshot pylk-snapshot tests-snapshot
+.PHONY: rag-dump ai-plan lint test fast full pick-snapshot pylk-snapshot tests-snapshot full-snapshot
 
 # Default values for RAG targets
 PROFILE ?= pint
@@ -60,6 +60,11 @@ tests-snapshot:
 		tools/repo_view/snapshot.sh > snapshot-tests.txt
 	@echo "[rv] wrote snapshot-tests.txt"
 
+# Snapshot entire codebase
+full-snapshot:
+	@tools/repo_view/snapshot.sh > full-snapshot.txt
+	@echo "[rv] wrote full-snapshot.txt"
+
 log-prompt:
 	@PROMPT="$(PROMPT)" RESPONSE="$(RESPONSE)" tools/log_prompt.sh
 
@@ -84,4 +89,5 @@ help:
 	@echo "  pick-snapshot     - snapshot explicit file(s) into snapshot-pick.txt"
 	@echo "  pylk-snapshot     - snapshot pylk/ into snapshot-pylk.txt"
 	@echo "  tests-snapshot    - snapshot tests/ into snapshot-tests.txt"
+	@echo "  full-snapshot     - snapshot entire codebase into full-snapshot.txt"
 	@echo "  log-prompt        - log a manual prompt/response to prompts/log/"
