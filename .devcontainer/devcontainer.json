@@ -10,15 +10,17 @@
   "containerEnv": {
     "DISPLAY": "host.docker.internal:0",
     "QT_QPA_PLATFORM": "xcb",
-    "QT_X11_NO_MITSHM": "1"
+    "QT_X11_NO_MITSHM": "1",
+    "QT_AUTO_SCREEN_SCALE_FACTOR": "1",
+    "PYTHONPATH": "/usr/lib/python3/dist-packages"
   },
 
   // Put the project venv first on PATH (explicit, no ${PATH})
   "remoteEnv": {
     "PATH": "/workspaces/pylk/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   },
+  "postCreateCommand": "python -m venv .venv && echo '/usr/lib/python3/dist-packages' > .venv/lib/python3.11/site-packages/system-packages.pth && . .venv/bin/activate && pip install --upgrade pip && pip install --no-cache-dir qtpy astropy numpy scipy jplephem matplotlib uncertainties loguru pint-pulsar && echo 'source /workspaces/pylk/.venv/bin/activate' >> ~/.bashrc",
 
-  "postCreateCommand": "python -m venv .venv && . .venv/bin/activate && pip install --upgrade pip && pip install --no-cache-dir qtpy astropy numpy scipy jplephem matplotlib uncertainties loguru pint-pulsar && echo 'source /workspaces/pylk/.venv/bin/activate' >> ~/.bashrc",
 
   "customizations": {
     "vscode": {
@@ -27,6 +29,16 @@
         "ms-vscode-remote.remote-containers"
       ]
     }
+  },
+  "mounts": [
+    {
+      "source": "${localEnv:HOME}/.Xauthority",
+      "target": "/home/vscode/.Xauthority",
+      "type": "bind"
+    }
+  ],
+  "portsAttributes": {
+    "5000": { "label": "Web App", "onAutoForward": "notify" }
   }
 }
 

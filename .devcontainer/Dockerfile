@@ -1,4 +1,4 @@
-FROM python:3.12-bookworm
+FROM python:3.11-bookworm
 
 # Install system dependencies and PyQt6
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -26,7 +26,10 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libxcb-cursor-dev \
     libxcb-icccm4-dev \
     xauth \
+    x11-utils \
+    x11-xserver-utils \
     build-essential \
+    xvfb \
     pkg-config \
     python3-dev \
     python3-pip \
@@ -47,3 +50,4 @@ WORKDIR /workspaces/pylk
 
 # Set up Python environment
 ENV PATH="/home/vscode/.local/bin:${PATH}"
+ENV PYTHONPATH="/usr/lib/python3/dist-packages:${PYTHONPATH}"
