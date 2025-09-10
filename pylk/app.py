@@ -4,7 +4,8 @@ from __future__ import annotations
 import os
 import sys
 import traceback
-from qtpy.QtCore import Qt, QCoreApplication
+
+from qtpy.QtCore import QCoreApplication, Qt
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMessageBox
 
@@ -21,6 +22,7 @@ def _install_excepthook():
         msg.setInformativeText(str(exc))
         msg.setDetailedText("".join(traceback.format_exception(exc_type, exc, tb)))
         msg.exec()
+
     sys.excepthook = handle_exception
 
 
@@ -57,6 +59,7 @@ def _configure_qt():
         policy_enum = getattr(Qt, "HighDpiScaleFactorRoundingPolicy", None)
         if policy_enum is not None:
             from qtpy.QtGui import QGuiApplication
+
             QGuiApplication.setHighDpiScaleFactorRoundingPolicy(policy_enum.PassThrough)
     except Exception:
         pass
@@ -81,4 +84,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

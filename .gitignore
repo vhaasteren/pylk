@@ -34,3 +34,14 @@ dist/
 
 # Custom files
 ideas.txt
+
+# Other files
+data/
+old-rag-code/
+pintk-interfaces.md
+pylk-old/
+pylk-old/pylk/
+pylk-old/scripts/
+rag-command-example.txt
+setup-old.py
+src-old/

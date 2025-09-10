@@ -1,30 +1,29 @@
 # pylk/main_window.py
 from __future__ import annotations
 
-from qtpy.QtCore import Qt, QSettings, QByteArray
+from qtpy.QtCore import QByteArray, QSettings, Qt
 from qtpy.QtGui import QAction, QKeySequence
 from qtpy.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
-    QLabel,
+    QDockWidget,
     QFileDialog,
+    QLabel,
+    QMainWindow,
+    QMessageBox,
     QStatusBar,
     QToolBar,
-    QDockWidget,
-    QMessageBox,
+    QVBoxLayout,
+    QWidget,
 )
 
 
 class CentralPlaceholder(QWidget):
     """Temporary central widget until plotting/view panes are added."""
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         lay = QVBoxLayout(self)
         title = QLabel("<h2>Welcome to Pylk</h2>")
-        subtitle = QLabel(
-            "This is the new Qt6 GUI scaffold. Open a .par/.tim to get started."
-        )
+        subtitle = QLabel("This is the new Qt6 GUI scaffold. Open a .par/.tim to get started.")
         subtitle.setWordWrap(True)
         for w in (title, subtitle):
             w.setAlignment(Qt.AlignHCenter)
@@ -219,4 +218,3 @@ class MainWindow(QMainWindow):
         s.setValue("MainWindow/geometry", self.saveGeometry())
         s.setValue("MainWindow/state", self.saveState())
         super().closeEvent(event)
-
