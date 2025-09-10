@@ -1,5 +1,11 @@
 .PHONY: rag-dump ai-plan lint test fast full pick-snapshot pylk-snapshot tests-snapshot
 
+# Default values for RAG targets
+PROFILE ?= pint
+K ?= 12
+OUT ?= .cursor/rag_context.md
+AI_OUT ?= .cursor/ai_context.md
+
 rag-dump:
 	@tools/rag/dump_for_cursor.sh "$(QUERY)" K=$(K) OUT=$(OUT) PROFILE=$(PROFILE)
 
@@ -7,7 +13,8 @@ ai-plan:  # quick block to paste into 01_planner.md
 	@echo "Goal: $(GOAL)"
 	@echo ""
 	@echo "RAG context:"
-	@ragcode dump -q "$(GOAL)" --k 12 --profile pint | sed -e 's/^/    /'
+	@ragcode dump -q "$(GOAL)" --k $(K) --profile $(PROFILE) --out $(AI_OUT)
+	@echo "Wrote AI context to $(AI_OUT)"
 
 # Quality gates
 lint:
@@ -59,13 +66,19 @@ log-prompt:
 # --- Help -------------------------------------------------------------------
 help:
 	@echo "Available targets:"
-	@echo "  rag-dump          - dump RAG data for cursor"
-	@echo "  ai-plan           - quick block for 01_planner.md with RAG context"
+	@echo "  rag-dump          - dump RAG data for cursor (OUT=.cursor/rag_context.md)"
+	@echo "  ai-plan           - quick block for 01_planner.md with RAG context (AI_OUT=.cursor/ai_context.md)"
 	@echo "  lint              - run ruff + black check"
 	@echo "  test              - run pytest"
 	@echo "  coverage          - run pytest with coverage report"
 	@echo "  fast              - minimal checks for quick iteration"
 	@echo "  full              - full quality gate (pre-commit + pytest)"
+	@echo ""
+	@echo "RAG Variables (defaults):"
+	@echo "  PROFILE=pint      - RAG profile to use"
+	@echo "  K=12              - Number of context chunks"
+	@echo "  OUT=.cursor/rag_context.md - Output file for rag-dump"
+	@echo "  AI_OUT=.cursor/ai_context.md - Output file for ai-plan"
 	@echo ""
 	@echo "Snapshots:"
 	@echo "  pick-snapshot     - snapshot explicit file(s) into snapshot-pick.txt"
