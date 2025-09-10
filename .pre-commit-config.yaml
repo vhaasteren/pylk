@@ -16,13 +16,12 @@ repos:
         args: ["--fix"]
         exclude: ^(pylk-old/|old-rag-code/|src-old/)
 
-  # MyPy disabled due to setuptools compatibility issues
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v1.10.0
-  #   hooks:
-  #     - id: mypy
-  #       additional_dependencies: []
-  #       exclude: ^(pylk-old/|old-rag-code/|src-old/)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.0
+    hooks:
+      - id: mypy
+        additional_dependencies: []
+        exclude: ^(pylk-old/|old-rag-code/|src-old/)
 
   # detect-secrets disabled due to setuptools compatibility issues
   # - repo: https://github.com/Yelp/detect-secrets
@@ -31,6 +30,20 @@ repos:
   #     - id: detect-secrets
   #       args: ["--baseline", ".secrets.baseline"]
   #       stages: [pre-commit]
+
+  - repo: local
+    hooks:
+      - id: enforce-milestone-size
+        name: Enforce milestone size (warn ≥300, fail >500 LOC)
+        language: system
+        entry: tools/pre-commit/enforce-milestone-size.sh
+        stages: [pre-commit]
+
+      - id: lint-no-pint-in-widgets
+        name: No PINT imports in widgets
+        language: system
+        entry: tools/pre-commit/lint-no-pint-in-widgets.sh
+        stages: [pre-commit]
 
   - repo: https://github.com/commitizen-tools/commitizen
     rev: v3.27.0

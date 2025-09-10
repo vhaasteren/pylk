@@ -9,7 +9,7 @@ AI_OUT ?= .cursor/ai_context.md
 rag-dump:
 	@tools/rag/dump_for_cursor.sh "$(QUERY)" K=$(K) OUT=$(OUT) PROFILE=$(PROFILE)
 
-ai-plan:  # quick block to paste into 01_planner.md
+ai-plan:  # quick block to paste into prompts/roles/feature_implementer.md
 	@echo "Goal: $(GOAL)"
 	@echo ""
 	@echo "RAG context:"
@@ -20,6 +20,11 @@ ai-plan:  # quick block to paste into 01_planner.md
 lint:
 	ruff check pylk
 	black --check pylk
+
+lint-no-pint-in-widgets:
+	@if grep -R -nE "^\s*(from|import)\s+pint\b" pylk/widgets 2>/dev/null; then \
+		echo "ERROR: PINT import found in pylk/widgets"; exit 1; \
+	fi
 
 test:
 	pytest -q
@@ -34,6 +39,7 @@ fast:  ## MVW: minimal checks for quick iteration
 
 full:  ## Full: everything green or fail
 	pre-commit run --all-files
+	$(MAKE) lint-no-pint-in-widgets
 	pytest -q
 
 # --- Repo snapshots (for LLM workflows) -------------------------------------
@@ -107,16 +113,25 @@ meta-snapshot:
 log-prompt:
 	@PROMPT="$(PROMPT)" RESPONSE="$(RESPONSE)" tools/log_prompt.sh
 
+# Show shared rules
+show-rules:
+	@echo "----- prompts/shared/rules.md -----"
+	@cat prompts/shared/rules.md
+	@echo
+	@echo "----- prompts/shared/acceptance.md -----"
+	@cat prompts/shared/acceptance.md
+
 # --- Help -------------------------------------------------------------------
 help:
 	@echo "Available targets:"
 	@echo "  rag-dump          - dump RAG data for cursor (OUT=.cursor/rag_context.md)"
-	@echo "  ai-plan           - quick block for 01_planner.md with RAG context (AI_OUT=.cursor/ai_context.md)"
+	@echo "  ai-plan           - quick block for prompts/roles/feature_implementer.md with RAG context (AI_OUT=.cursor/ai_context.md)"
 	@echo "  lint              - run ruff + black check"
+	@echo "  lint-no-pint-in-widgets - check no PINT imports in widgets"
 	@echo "  test              - run pytest"
 	@echo "  coverage          - run pytest with coverage report"
 	@echo "  fast              - minimal checks for quick iteration"
-	@echo "  full              - full quality gate (pre-commit + pytest)"
+	@echo "  full              - full quality gate (pre-commit + pytest + PINT check)"
 	@echo ""
 	@echo "RAG Variables (defaults):"
 	@echo "  PROFILE=pint      - RAG profile to use"
@@ -133,3 +148,4 @@ help:
 	@echo "  status-snapshot   - snapshot project status and architecture into status-snapshot.txt"
 	@echo "  meta-snapshot     - snapshot documentation (no code) into meta-snapshot.txt"
 	@echo "  log-prompt        - log a manual prompt/response to prompts/log/"
+	@echo "  show-rules        - display shared rules from prompts/shared/rules.md"

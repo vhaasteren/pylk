@@ -1,4 +1,9 @@
+import os
+
 import pytest
+
+# Set headless Qt as default for tests
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 
 @pytest.fixture(scope="session")

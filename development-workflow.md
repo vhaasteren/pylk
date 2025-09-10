@@ -1,15 +1,15 @@
 # Development Workflow (Pylk)
 
-This document provides detailed, step-by-step workflows for common development tasks in Pylk. It's your practical blueprint for day-to-day development.
+This document provides the **human developer's workflow** for AI-assisted development in Pylk. You don't implement code directly—you craft prompts that guide the AI assistant to implement features correctly.
 
 ## Table of Contents
 - [Quick Reference](#quick-reference)
-- [Adding a New Feature](#adding-a-new-feature)
-- [Fixing a Bug](#fixing-a-bug)
-- [Refactoring Code](#refactoring-code)
-- [Working with PINT Integration](#working-with-pint-integration)
-- [Testing Workflows](#testing-workflows)
-- [Code Review Process](#code-review-process)
+- [The AI-Assisted Development Loop](#the-ai-assisted-development-loop)
+- [Prompt Engineering Workflow](#prompt-engineering-workflow)
+- [Feature Development Process](#feature-development-process)
+- [Bug Fix Process](#bug-fix-process)
+- [Refactoring Process](#refactoring-process)
+- [Verification and Quality Gates](#verification-and-quality-gates)
 - [Troubleshooting](#troubleshooting)
 
 ## Quick Reference
@@ -25,11 +25,11 @@ make full
 # Generate RAG context for complex features
 make rag-dump QUERY="your question about PINT internals"
 
-# Run specific tests
-pytest tests/test_specific.py -v
+# Generate AI planning context into Cursor-visible folder
+make ai-plan GOAL="your feature goal" AI_OUT=.cursor/cursor_context.md
 
-# Format and lint
-make lint
+# Show shared rules
+make show-rules
 ```
 
 ### Branch Naming
@@ -37,16 +37,106 @@ make lint
 - `fix/<yourname>/<slug>` - Bug fixes  
 - `chore/<yourname>/<slug>` - Maintenance tasks
 
+### AI/LLM Workflow
+> **🤖 For AI-assisted development, see [`prompts/`](prompts/) directory**  
+> **📋 Role-based prompts in [`prompts/roles/`](prompts/roles/)**  
+> **📝 Reusable templates in [`prompts/templates/`](prompts/templates/)**
+
 ---
 
-## Adding a New Feature
+## The AI-Assisted Development Loop
 
-### 1. Planning Phase
+### Core Workflow
+1. **Plan** → Define what you're building
+2. **Research** → Use RAG if PINT integration needed  
+3. **Prompt** → Craft the perfect prompt for the AI
+4. **Iterate** → AI implements, you verify with `make fast` and interactive runs
+5. **Review** → Use AI reviewer role for quality check
+6. **Commit** → Use AI commit writer for conventional commits
+
+### Key Principle
+**You are the architect and quality gate. The AI is your implementation partner.**
+
+---
+
+## Prompt Engineering Workflow
+
+### 1. Choose Your Role
+Select the appropriate AI role from `prompts/roles/`:
+- **`prompt_engineer.md`** - For crafting effective prompts (meta-role)
+- **`feature_implementer.md`** - For new features
+- **`code_reviewer.md`** - For quality review
+- **`commit_writer.md`** - For commit messages
+- **`rag_question.md`** - For PINT-specific questions
+- **`postmortem_writer.md`** - For analyzing failures
+
+### 2. Use Templates
+Start with templates from `prompts/templates/`:
+- **`feature_kickoff.md`** - For new features
+- **`bug_fix.md`** - For bug fixes
+- **`refactoring.md`** - For code refactoring
+
+### 3. Craft Your Prompt
+
+#### Option A: Use Prompt Engineer Role (Recommended)
+```markdown
+# Using prompts/roles/prompt_engineer.md
+
+## Task
+Add pre-fit residuals plotting functionality
+
+## Requirements
+- Load PAR+TIM files via PINT
+- Compute pre-fit residuals
+- Display in matplotlib widget
+- Follow MVC pattern with Qt signals
+
+## Context
+- PINT integration needed
+- New feature (not bug fix or refactoring)
+- Medium complexity
+
+## Success Criteria
+- Feature works as expected
+- All tests pass
+- Code follows project standards
+- No regressions
+```
+
+#### Option B: Direct Role Usage
+```markdown
+# Using prompts/roles/feature_implementer.md
+
+## Goal
+Add pre-fit residuals plotting functionality
+
+## RAG Context
+[Paste output from `make rag-dump QUERY="PINT residuals calculation"`]
+
+## Constraints
+- Follow MVC pattern (no PINT in widgets)
+- Include tests for all new functionality
+- Use Qt signals/slots for communication
+- Maximum 300 LOC per milestone
+```
+
+### 4. Iterate and Refine
+- **First prompt** → Get initial implementation
+- **Verification** → Run `make fast` to check
+- **Refinement** → Ask AI to fix issues or add features
+- **Review** → Use reviewer role for quality check
+
+---
+
+## Feature Development Process
+
+### Phase 1: Planning and Research
 
 #### 1.1 Define the Feature
-- [ ] Write a clear feature description
-- [ ] Identify which components will be affected (UI, controllers, models)
+- [ ] Write a clear, specific feature description
+- [ ] Identify affected components (UI, controllers, models)
 - [ ] Determine if PINT integration is needed
+- [ ] Estimate complexity and break into milestones
 
 #### 1.2 Research (if PINT integration needed)
 ```bash
@@ -62,314 +152,213 @@ make ai-plan GOAL="Add residuals calculation feature"
 git checkout -b feat/yourname/residuals-calculation
 ```
 
-### 2. Implementation Phase
+### Phase 2: Prompt Engineering
 
-#### 2.1 Set Up Development Environment
-```bash
-# Ensure you're in the devcontainer
-# Virtual environment should auto-activate
-source .venv/bin/activate  # if needed
+#### 2.1 Choose Your Approach
+- **Simple features** → Use `prompts/roles/feature_implementer.md` directly
+- **Complex features** → Use `prompts/templates/feature_kickoff.md` + role
+- **PINT integration** → Include RAG context from step 1.2
 
-# Run quick checks
-make fast
+#### 2.2 Craft Your Prompt
+```markdown
+# Example: Using feature_implementer.md
+
+## Goal
+Add pre-fit residuals plotting functionality that:
+- Loads PAR+TIM files via PINT
+- Computes pre-fit residuals
+- Displays them in a matplotlib widget
+- Follows MVC pattern with Qt signals
+
+## RAG Context
+[Paste your RAG output here]
+
+## Milestone Structure
+- Milestone 1: PulsarModel + ProjectController
+- Milestone 2: PlkView widget
+- Milestone 3: MainWindow integration
+- Milestone 4: Polish and UX
+
+## Constraints
+- No PINT calls in widgets
+- Include tests for all functionality
+- Use Qt signals/slots
+- Maximum 300 LOC per milestone
 ```
 
-#### 2.2 Follow MVC Pattern
-- [ ] **Models**: Add data structures and PINT integration logic
-- [ ] **Controllers**: Add business logic and signal handling
-- [ ] **Views**: Add thin UI components that connect to controllers
+#### 2.3 Send to AI
+- Paste your crafted prompt into Cursor
+- Let the AI implement the first milestone
+- **PAUSE** after each milestone for verification
 
-#### 2.3 Implementation Steps
-1. **Start with Models** (if data/PINT integration needed)
-   ```python
-   # pylk/models/residuals_model.py
-   from qtpy.QtCore import QObject, Signal
-   import pint
-   
-   class ResidualsModel(QObject):
-       residuals_updated = Signal(list)
-       
-       def calculate_residuals(self, data):
-           # PINT integration here
-           pass
-   ```
+### Phase 3: Verification and Iteration
 
-2. **Add Controllers** (business logic)
-   ```python
-   # pylk/controllers/residuals_controller.py
-   from qtpy.QtCore import QObject
-   from ..models.residuals_model import ResidualsModel
-   
-   class ResidualsController(QObject):
-       def __init__(self):
-           self.model = ResidualsModel()
-           self.model.residuals_updated.connect(self._on_residuals_updated)
-   ```
-
-3. **Create Views** (thin UI)
-   ```python
-   # pylk/views/residuals_widget.py
-   from qtpy.QtWidgets import QWidget, QVBoxLayout
-   from ..controllers.residuals_controller import ResidualsController
-   
-   class ResidualsWidget(QWidget):
-       def __init__(self):
-           super().__init__()
-           self.controller = ResidualsController()
-           self._setup_ui()
-   ```
-
-#### 2.4 Iterative Development
+#### 3.1 Verify Each Milestone
 ```bash
-# After each change, run quick checks
+# After each AI milestone
 make fast
 
-# Test specific functionality
-pytest tests/test_residuals.py -v
-
-# Check imports work
-python -c "from pylk.views.residuals_widget import ResidualsWidget"
+# If issues found, ask AI to fix:
+# "The tests are failing because of import errors. Please fix the imports and re-run make fast."
 ```
 
-### 3. Testing Phase
+#### 3.2 Iterate and Refine
+- **Fix issues** → Ask AI to address specific problems
+- **Add features** → Request additional functionality
+- **Improve UX** → Ask for UI/UX enhancements
+- **Add tests** → Request more comprehensive test coverage
 
-#### 3.1 Add Unit Tests
-```python
-# tests/test_residuals_model.py
-import pytest
-from pylk.models.residuals_model import ResidualsModel
+#### 3.3 Quality Review
+```markdown
+# Use prompts/roles/code_reviewer.md
 
-def test_residuals_calculation():
-    model = ResidualsModel()
-    # Test PINT integration
-    pass
+## Review Target
+Review these changes for Pylk:
 
-def test_signals():
-    model = ResidualsModel()
-    # Test signal emission
-    pass
+[Paste the changes the AI made]
+
+## Focus Areas
+- MVC pattern compliance
+- Test coverage
+- Code quality
+- Performance considerations
 ```
 
-#### 3.2 Add Integration Tests
-```python
-# tests/test_residuals_integration.py
-from pytestqt.qtbot import QtBot
-from pylk.views.residuals_widget import ResidualsWidget
+### Phase 4: Finalization
 
-def test_residuals_widget_integration(qtbot):
-    widget = ResidualsWidget()
-    qtbot.addWidget(widget)
-    # Test UI interactions
-    pass
-```
-
-#### 3.3 Run All Tests
+#### 4.1 Final Quality Gate
 ```bash
-# Full test suite
-make test
-
-# Specific test file
-pytest tests/test_residuals*.py -v
-```
-
-### 4. Pre-commit Phase
-
-#### 4.1 Code Quality Checks
-```bash
-# Run full quality gate
+# Run full quality checks
 make full
 
-# If issues found, fix them:
-# - Black formatting: black pylk/
-# - Ruff linting: ruff check pylk --fix
-# - MyPy type checking: mypy pylk/
+# If issues found, ask AI to fix them
 ```
 
-#### 4.2 Update Documentation
-- [ ] Update CHANGELOG.md for user-facing changes
-- [ ] Update README.md if setup instructions changed
-- [ ] Update API docs if interfaces changed
+#### 4.2 Generate Commit Message
+```markdown
+# Use prompts/roles/commit_writer.md
 
-#### 4.3 Commit Changes
+## Changes to Commit
+[Describe what was implemented]
+
+## Testing
+- All tests pass
+- Manual testing completed
+- No regressions found
+```
+
+#### 4.3 Commit and Push
 ```bash
 # Stage changes
 git add .
 
-# Commit with conventional format
-git commit -m "feat(residuals): add residuals calculation widget
+# Commit with AI-generated message
+git commit -m "feat(residuals): add pre-fit residuals plotting
 
-- Add ResidualsModel with PINT integration
-- Add ResidualsController for business logic  
-- Add ResidualsWidget for UI
-- Include unit and integration tests
+- Add PulsarModel with PINT integration
+- Add ProjectController for project lifecycle
+- Add PlkView with matplotlib plotting
+- Include comprehensive tests
 
-Testing: pytest tests/test_residuals*.py passes"
-```
-
-### 5. Review and Merge
-
-#### 5.1 Push and Create PR
-```bash
-git push origin feat/yourname/residuals-calculation
-# Create PR on GitHub
-```
-
-#### 5.2 Self-Review Checklist
-- [ ] Code follows MVC pattern (no PINT calls in widgets)
-- [ ] All tests pass (`make full`)
-- [ ] Code is properly formatted (Black/Ruff)
-- [ ] Type hints are correct (MyPy)
-- [ ] Documentation is updated if needed
-- [ ] Commit message follows conventional format
-
----
-
-## Fixing a Bug
-
-### 1. Reproduce the Bug
-- [ ] Create minimal reproduction case
-- [ ] Document expected vs actual behavior
-- [ ] Identify which component is affected
-
-### 2. Debug and Fix
-```bash
-# Create bug fix branch
-git checkout -b fix/yourname/bug-description
-
-# Use debugging tools
-python -m pdb run.py
-# or add print statements/logging
-```
-
-### 3. Add Regression Test
-```python
-# tests/test_bug_fix.py
-def test_bug_reproduction():
-    # Test that reproduces the original bug
-    pass
-
-def test_bug_fix():
-    # Test that verifies the fix works
-    pass
-```
-
-### 4. Verify Fix
-```bash
-# Run tests
-make test
-
-# Manual testing
-python run.py
-# Test the specific functionality
+Testing: All tests pass, manual testing completed"
 ```
 
 ---
 
-## Refactoring Code
+## Bug Fix Process
 
-### 1. Plan the Refactoring
-- [ ] Identify code smells (long methods, duplicated code, etc.)
-- [ ] Plan the refactoring steps
+### 1. Reproduce and Analyze
+- [ ] Reproduce the bug consistently
+- [ ] Identify root cause
+- [ ] Determine affected components
+
+### 2. Craft Bug Fix Prompt
+```markdown
+# Using prompts/templates/bug_fix.md
+
+## Problem Description
+Widget sizing issue: matplotlib widget is tiny on first load
+
+## Root Cause Analysis
+The widget doesn't have proper size policies set
+
+## Solution Approach
+- Files to modify: pylk/widgets/plk_view.py
+- Tests to add: widget sizing tests
+- Risk assessment: Low risk, UI-only change
+```
+
+### 3. AI Implementation
+- Send prompt to AI
+- Verify fix with `make fast`
+- Iterate if needed
+
+### 4. Quality Check
+- Use reviewer role to check the fix
+- Ensure regression test is added
+- Verify no new bugs introduced
+
+---
+
+## Refactoring Process
+
+### 1. Identify Refactoring Need
+- [ ] Identify code smells or technical debt
+- [ ] Plan the refactoring approach
 - [ ] Ensure comprehensive test coverage exists
 
-### 2. Refactor Incrementally
-```bash
-# Create refactoring branch
-git checkout -b chore/yourname/refactor-description
+### 2. Craft Refactoring Prompt
+```markdown
+# Using prompts/templates/refactoring.md
 
-# Make small, focused changes
-# Run tests after each change
+## Refactoring Goal
+Extract common signal handling into base class
+
+## Current Issues
+- Duplicate signal connection code
+- Inconsistent error handling
+- Hard to maintain
+
+## Proposed Changes
+- Files to modify: pylk/widgets/plk_view.py, pylk/widgets/par_editor.py
+- New files to create: pylk/widgets/base_widget.py
+- Files to delete: None
+```
+
+### 3. AI Implementation
+- Send prompt to AI
+- Verify with `make fast`
+- Ensure all tests still pass
+
+---
+
+## Verification and Quality Gates
+
+### Milestone Verification
+After each AI milestone:
+```bash
+# Quick check
 make fast
+
+# If issues found, ask AI to fix:
+# "The import is failing. Please fix the import statement and re-run make fast."
 ```
 
-### 3. Maintain Functionality
-- [ ] All existing tests continue to pass
-- [ ] No new bugs introduced
-- [ ] Code is cleaner and more maintainable
-
----
-
-## Working with PINT Integration
-
-### 1. When to Use RAG
-Use RAG when you need to understand:
-- PINT internal APIs
-- Complex timing calculations
-- Data structures and formats
-- Integration patterns
-
-### 2. RAG Workflow
+### Pre-commit Verification
+Before committing:
 ```bash
-# Generate context for specific PINT topic
-make rag-dump QUERY="PINT timing model fitting" OUT=.cursor/rag_context.md
-
-# Use in Cursor - the context file will be automatically loaded
-# Ask questions like: "How do I integrate PINT timing model fitting?"
-```
-
-### 3. PINT Integration Patterns
-- **Models**: Handle PINT data structures and calculations
-- **Controllers**: Orchestrate PINT operations and emit signals
-- **Views**: Display PINT results, never call PINT directly
-
----
-
-## Testing Workflows
-
-### 1. Unit Testing
-```bash
-# Test specific module
-pytest tests/test_models.py -v
-
-# Test with coverage
-pytest tests/test_models.py --cov=pylk.models
-```
-
-### 2. Integration Testing
-```bash
-# Test Qt components
-pytest tests/test_views.py -v
-
-# Test full application
-pytest tests/test_integration.py -v
-```
-
-### 3. Manual Testing
-```bash
-# Run the application
-python run.py
-
-# Test GUI functionality
-# - Window opens correctly
-# - Widgets respond to interactions
-# - No console errors
-```
-
----
-
-## Code Review Process
-
-### 1. Self-Review Before PR
-```bash
-# Run full quality gate
+# Full quality gate
 make full
 
-# Check diff
-git diff --cached
-
-# Review checklist:
-# - [ ] Code follows style guidelines
-# - [ ] Tests are included
-# - [ ] No PINT calls in widgets
-# - [ ] Proper error handling
-# - [ ] Documentation updated
+# If issues found, ask AI to fix:
+# "The pre-commit hooks are failing. Please fix the formatting and linting issues."
 ```
 
-### 2. PR Review
-- [ ] Small, focused changes (< 300 LOC)
-- [ ] Clear commit messages
-- [ ] Tests included for new functionality
-- [ ] No breaking changes without discussion
+### Manual Testing
+- [ ] Run the application: `python run.py`
+- [ ] Test the new functionality
+- [ ] Verify no regressions
+- [ ] Check UI responsiveness
 
 ---
 
@@ -377,176 +366,52 @@ git diff --cached
 
 ### Common Issues
 
-#### 1. Import Errors
-```bash
-# Check Python path
-python -c "import sys; print(sys.path)"
+#### 1. AI Implementation Issues
+- **Problem**: AI didn't follow the prompt correctly
+- **Solution**: Be more specific in your prompt, include examples
+- **Prevention**: Use templates and be explicit about constraints
 
-# Check if package is installed
-pip list | grep pylk
-```
+#### 2. Test Failures
+- **Problem**: Tests fail after AI implementation
+- **Solution**: Ask AI to fix the specific test failures
+- **Example**: "The test is failing because of import errors. Please fix the imports."
 
-#### 2. Qt/GUI Issues
-```bash
-# Check display forwarding (macOS)
-echo $DISPLAY
+#### 3. Pre-commit Failures
+- **Problem**: Code doesn't pass pre-commit hooks
+- **Solution**: Ask AI to fix formatting/linting issues
+- **Example**: "Please fix the Black formatting and Ruff linting issues."
 
-# Test Qt import
-python -c "from qtpy.QtWidgets import QApplication; print('Qt OK')"
-```
-
-#### 3. Test Failures
-```bash
-# Run with verbose output
-pytest tests/test_specific.py -v -s
-
-# Run with debugging
-pytest tests/test_specific.py --pdb
-```
-
-#### 4. Pre-commit Failures
-```bash
-# Run specific hook
-pre-commit run black --all-files
-
-# Skip problematic hooks temporarily
-SKIP=mypy make fast
-```
+#### 4. Integration Issues
+- **Problem**: Components don't work together
+- **Solution**: Ask AI to fix the integration, be specific about the issue
+- **Example**: "The signal connection isn't working. Please fix the signal/slot connections."
 
 ### Getting Help
-1. Check this document first
-2. Look at existing code patterns
-3. Use RAG for PINT-specific questions
-4. Ask in team chat/issue tracker
+1. **Check shared rules**: `make show-rules`
+2. **Use RAG for PINT questions**: `make rag-dump QUERY="your question"`
+3. **Use reviewer role**: For quality issues
+4. **Use postmortem writer**: For analyzing failures
 
 ---
 
-## Workflow Summary
+## Key Principles
 
-### Daily Development Loop
-1. **Plan** → Define what you're building
-2. **Research** → Use RAG if PINT integration needed  
-3. **Code** → Follow MVC pattern, thin UI widgets
-4. **Test** → Unit tests for logic, integration tests for UI
-5. **Quality** → `make fast` for iteration, `make full` before commit
-6. **Commit** → Conventional commit format
-7. **Review** → Self-review checklist, then PR
+### For Human Developers
+- **You are the architect** - Define what to build
+- **You are the quality gate** - Verify and approve changes
+- **You are the prompt engineer** - Craft effective prompts
+- **You are the integrator** - Ensure everything works together
 
-### Key Principles
-- **Thin UI**: Logic in controllers/models, not widgets
-- **No PINT in widgets**: PINT calls only in models/controllers
-- **Test-driven**: Add tests as you build
-- **Iterative**: Small changes, frequent commits
-- **Quality gates**: Use `make fast` and `make full` appropriately
+### For AI Assistant
+- **Follow the rules** - Always reference `prompts/shared/rules.md`
+- **Implement incrementally** - One milestone at a time
+- **Include tests** - For all new functionality
+- **Be responsive** - Fix issues when asked
 
-This workflow ensures consistent, high-quality development while maintaining the project's architectural principles.
+### Success Metrics
+- **Prompt effectiveness** - AI implements correctly on first try
+- **Iteration speed** - Quick fixes with `make fast`
+- **Quality gates** - `make full` passes consistently
+- **User experience** - Features work as expected
 
----
-
-## Non-Cursor Workflow (VS Code, Aider, Jupyter)
-
-You can follow the same MVW ↔ Full loop without Cursor. Below are step-by-step alternatives.
-
-### VS Code + Copilot Chat (MVW)
-1. **Prep context** (only if you need PINT internals or larger context):
-   ```bash
-   make rag-dump QUERY="PINT residuals calculation" OUT=CONTEXT.md
-   ```
-   Keep `CONTEXT.md` open in a VS Code tab.
-2. **Ask AI to implement your goal**:
-
-   ```
-   Implement the goal below by making the necessary file changes directly.
-   Goal: "<your goal here>"
-   Constraints: follow prompts/style_constraints.md (thin widgets, no PINT in widgets, logic in controllers/models). Add/update tests when logic changes.
-   Use CONTEXT.md as authoritative context where relevant.
-   ```
-
-3. **Review and apply changes**:
-   * AI will make changes directly to files
-   * Review the changes in your editor
-   * Accept or reject individual changes as needed
-4. **Run fast loop**:
-   ```bash
-   make fast
-   ```
-5. **Before PR**:
-   ```bash
-   make full
-   ```
-6. **Optional**: log your prompt/response for the presentation
-   ```bash
-   make log-prompt PROMPT="Implement <goal>" RESPONSE="<short summary or link to patch>"
-   ```
-
-### Aider CLI (Agentic coding; MVW or Full)
-
-1. **Install** Aider (outside the container if needed).
-2. **Run with model of your choice**:
-   ```bash
-   aider --model gpt-4o --yes --subtree pylk "Implement <goal> following prompts/style_constraints.md. Generate tests for any logic changes."
-   ```
-
-   Tips:
-   * Paste `CONTEXT.md` content if touching PINT internals:
-     ```bash
-     make rag-dump QUERY="where PINT handles <topic>" OUT=.aider_context.md
-     ```
-   * Aider applies diffs for you; review its commit messages and ensure Conventional Commits.
-3. **Quality gates**:
-   ```bash
-   make fast
-   make full
-   ```
-
-### Jupyter / Notebook-first Planning (Design & review)
-
-Use this when you want to plan outside the IDE or show the flow in a demo:
-
-1. Generate context for planning:
-   ```bash
-   make ai-plan GOAL="Add KernelController restart"
-   ```
-2. In a notebook cell, paste the planner prompt (from `prompts/01_planner.md`) with the printed RAG block.
-3. Ask for:
-   * Short plan
-   * Direct file modifications
-   * Tests (if logic changes)
-   * Follow-ups
-4. Apply the changes locally, then run:
-   ```bash
-   make fast
-   make full
-   ```
-
-### Model choices & fallbacks
-
-* **Premium** (if available): GPT-4.5 or Claude 4 Sonnet for planning/review; other for quick edits.
-* **Open/local**: Llama-based models via Aider/CLI can work well for diffs; pair with `CONTEXT.md` to ground PINT integration.
-
-### Tips & caveats
-
-* Prefer **direct file modifications** from AI tools to reduce "drift."
-* Keep widgets thin; push logic to controllers/models.
-* For PINT integration, use `make rag-dump` to inject authoritative context; skip RAG for small local refactors.
-* Use **Fast mode** during spikes:
-  ```bash
-  make fast
-  ```
-  and **Full mode** before pushing:
-  ```bash
-  make full
-  ```
-* If merge conflicts occur, use the conflict-resolution prompt in `CONTRIBUTING.md` (AI-assisted resolution via direct file modifications).
-
----
-
-## Definition of Done
-
-- [ ] Code implements the requested feature (per `01_planner.md` goal).
-- [ ] Code follows `prompts/style_constraints.md` (thin UI, no PINT in widgets).
-- [ ] Tests cover new logic (unit tests for models/controllers, integration tests for UI).
-- [ ] `make full` passes (pre-commit, pytest).
-- [ ] Manual testing confirms functionality (e.g., GUI interactions work).
-- [ ] Commit message follows Conventional Commits.
-- [ ] CHANGELOG.md updated for user-facing changes.
+This workflow ensures you maintain control while leveraging AI for implementation, resulting in high-quality, well-tested code that follows project standards.

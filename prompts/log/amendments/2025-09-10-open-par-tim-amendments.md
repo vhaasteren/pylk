@@ -98,14 +98,28 @@ The original prompt was in `./prompts/log/2025-09-10-open-par-tim.md` and outlin
 ## Key Lessons Learned
 
 1. **Signal Timing Issues**: When implementing MVC patterns with Qt signals, ensure signal connections happen before data is emitted, or provide fallback mechanisms to handle already-emitted data.
+   - **Pattern**: [Signal Timing Pattern](successful_patterns/signal_timing.md)
 
 2. **UI State Management**: Proper show/hide logic is crucial for professional UI behavior. Hidden widgets should not interfere with the user experience.
 
 3. **Test Environment Considerations**: Always consider how functionality will behave during automated testing, especially for features that involve user interaction (file dialogs, etc.).
+   - **Pattern**: [Headless Testing Pattern](successful_patterns/headless_testing.md)
 
 4. **Widget Sizing**: Qt widget sizing can be complex, especially with matplotlib integration. Proper size policies and event handling are essential for responsive UI.
 
 5. **Incremental Testing**: Running `make fast` after each milestone helped catch issues early, but some integration issues only became apparent after the full implementation.
+
+## Patterns Extracted
+
+### Signal Timing Pattern
+- **Problem**: Late signal subscription causes widgets to miss initial data updates
+- **Solution**: Idempotent `set_model()` method that renders current state immediately
+- **Location**: [successful_patterns/signal_timing.md](successful_patterns/signal_timing.md)
+
+### Headless Testing Pattern  
+- **Problem**: GUI tests fail in headless environments due to dialogs and display issues
+- **Solution**: Dependency injection for file operations, headless Qt environment
+- **Location**: [successful_patterns/headless_testing.md](successful_patterns/headless_testing.md)
 
 ## Final State
 
