@@ -16,11 +16,13 @@ repos:
         args: ["--fix"]
         exclude: ^(pylk-old/|old-rag-code/|src-old/)
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
+  - repo: local
     hooks:
       - id: mypy
-        additional_dependencies: []
+        name: mypy
+        entry: tools/pre-commit/mypy.sh
+        language: system
+        types: [python]
         exclude: ^(pylk-old/|old-rag-code/|src-old/)
 
   # detect-secrets disabled due to setuptools compatibility issues
